@@ -3,14 +3,13 @@ def get_name():
     return name
 
 def get_item_price():
-    price = float(input("Enter price of item :"))
+    user_input = (input("Enter price of item (Press Enter to stop):"))
     
-    if price == 0:
+    if user_input == "":
         return 0
-    
     # 2. Recursive Case: Add current price to the NEXT price captured
-    else:
-        return price + get_item_price()
+    price = float(user_input)
+    return price + get_item_price()
      
 
 def calculate_tax(subtotal):
@@ -18,7 +17,7 @@ def calculate_tax(subtotal):
     return tax
 
 def display_receipt(name, subtotal, tax, total):
-    print("\-----------RECEIPT------------")
+    print("-----------RECEIPT------------")
     print("Customer Name:", name)
     print("Subtotal:", subtotal)
     print("Tax:", tax)
