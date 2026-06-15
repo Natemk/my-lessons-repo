@@ -1,4 +1,13 @@
 inventory =[]
+opts = ["Add" , "Remove" , "Veiw", "Close" ]
+
+def option_s():
+    
+    for opt in opts:
+        print (opt)
+        return
+    return
+    
 
 def add():
     add_new = inventory.append(input("Enter product: "))
@@ -24,10 +33,31 @@ def quantity():
     
     return
 
+
 def veiw_all():
    for inventor in  inventory:
-       print("\nCurrent inventory : ",inventory)
-       return
+      print("\nCurrent inventory : ",inventory)
+      return
    return
+
+    
+   
+
+
+print("-----------INVENTORY-----------" + '\n'
+      + "Welcome to my inventory" + '\n'
+      + option_s())
+
+options = input("Choose one of the options:")
+
+if options.upper == "add":
+    add()
+elif options.upper == "remove":
+    remove()
+elif options.upper =="veiw":
+    veiw_all()
+else:
+    return
+    
 
 
