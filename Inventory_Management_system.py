@@ -57,7 +57,8 @@ elif options.upper == "remove":
 elif options.upper =="veiw":
     veiw_all()
 else:
-    return
+    print("Closing the inventory")
+
     
 
 
