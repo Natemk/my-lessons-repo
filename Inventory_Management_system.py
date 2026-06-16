@@ -1,64 +1,45 @@
-inventory =[]
-opts = ["Add" , "Remove" , "Veiw", "Close" ]
+inventory = []
 
-def option_s():
-    
-    for opt in opts:
-        print (opt)
-        return
-    return
-    
-
-def add():
-    add_new = inventory.append(input("Enter product: "))
-    
-    if add_new =="":
-        return
-    
-    return
-
-def remove():
-    remove_item =inventory.pop("Enter the name of the item to be removed :")
-    
-    if remove_item =="":
-        return
-    
-    return
-
-def quantity():
-    quant = len(inventory)
-    
-    if quant =="":
-        return
-    
+def menu():
+    print("\n----------- INVENTORY -----------")
+    print("Options:")
+    print("  add    - Add an item")
+    print("  remove - Remove an item")
+    print("  view   - View all items")
+    print("  exit   - Exit the program")
     return
 
 
-def veiw_all():
-   for inventor in  inventory:
-      print("\nCurrent inventory : ",inventory)
-      return
-   return
-
-    
-   
-
-
-print("-----------INVENTORY-----------" + '\n'
-      + "Welcome to my inventory" + '\n'
-      + option_s())
-
-options = input("Choose one of the options:")
-
-if options.upper == "add":
-    add()
-elif options.upper == "remove":
-    remove()
-elif options.upper =="veiw":
-    veiw_all()
-else:
-    print("Closing the inventory")
-
-    
-
-
+def options():
+    while True:
+        menu()
+        choice = input("Enter your choice: ").lower()
+        
+        if choice == "add":
+            item = input("Enter name the item to be added: ")
+            inventory.append(item)
+            print( item, "has been added to inventory")
+            
+        elif choice == "remove":
+            item = input("Enter name the item to be removed: ")
+            if item in inventory:
+                inventory.remove(item)
+                print( item, "has been removed from inventory")
+            else:
+                print( item, "is not in inventory")
+                
+        elif choice == "view":
+            if inventory:
+                print("Current inventory:")
+                for item in inventory:
+                    print("-", item)
+            else:
+                print("Inventory is empty.")
+        elif choice == "exit":
+            print("Exiting the program.")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+            
+menu_inventory = menu()         
+main = options()
