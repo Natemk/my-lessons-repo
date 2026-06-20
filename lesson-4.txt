@@ -1,0 +1,357 @@
+Week 4: Decision Making with If Statements
+
+At this stage the student can:
+
+✅ Print information
+
+✅ Create variables
+
+✅ Accept user input
+
+✅ Convert strings to integers
+
+Now the student learns how programs make decisions.
+
+This is one of the most important lessons in programming.
+
+Learning Objectives
+
+By the end of this lesson students should be able to:
+
+Understand Boolean logic
+Use if
+Use else
+Use elif
+Use comparison operators
+Build decision-making programs
+Lesson Structure (90 Minutes)
+Part 1: Review Previous Lesson (10 Minutes)
+Ask
+
+How do we get input from a user?
+
+Answer:
+
+input()
+
+How do we convert text to a number?
+
+Answer:
+
+int()
+
+Example:
+
+age = int(input("Enter age: "))
+Part 2: What is Decision Making? (10 Minutes)
+What to Say
+
+Every day we make decisions.
+
+Example:
+
+If it is raining
+    Take an umbrella
+Otherwise
+    Don't take an umbrella
+
+Computers do exactly the same thing.
+
+Draw:
+
+Condition
+    ↓
+ True or False
+    ↓
+ Action
+Part 3: Introducing If Statements (15 Minutes)
+
+Show:
+
+age = 20
+
+if age >= 18:
+    print("Adult")
+
+Output:
+
+Adult
+
+Break it down
+
+if age >= 18:
+
+means:
+
+If age is greater than or equal to 18
+Part 4: Comparison Operators (10 Minutes)
+
+Create this table:
+
+Operator	Meaning
+==	Equal to
+!=	Not equal to
+>	Greater than
+<	Less than
+>=	Greater than or equal
+<=	Less than or equal
+
+Examples:
+
+print(5 > 3)
+
+Output:
+
+True
+print(2 > 10)
+
+Output:
+
+False
+print(5 == 5)
+
+Output:
+
+True
+Part 5: If and Else (15 Minutes)
+
+Show:
+
+age = int(input("Enter your age: "))
+
+if age >= 18:
+    print("Adult")
+else:
+    print("Minor")
+
+Example 1
+
+Input:
+
+20
+
+Output:
+
+Adult
+
+Example 2
+
+Input:
+
+15
+
+Output:
+
+Minor
+
+Explain
+
+else
+
+means:
+
+If the first condition is false, do this instead
+Part 6: Using Elif (15 Minutes)
+
+Sometimes there are multiple possibilities.
+
+Show:
+
+score = int(input("Enter score: "))
+
+if score >= 90:
+    print("A")
+elif score >= 80:
+    print("B")
+elif score >= 70:
+    print("C")
+else:
+    print("Fail")
+
+Examples
+
+Input:
+
+95
+
+Output:
+
+A
+
+Input:
+
+82
+
+Output:
+
+B
+
+Input:
+
+45
+
+Output:
+
+Fail
+
+Explain
+
+elif
+
+means:
+
+Check another condition
+Part 7: Real World Example (10 Minutes)
+
+Build a login checker.
+
+password = input("Enter password: ")
+
+if password == "python123":
+    print("Access Granted")
+else:
+    print("Access Denied")
+
+Example
+
+Input:
+
+python123
+
+Output:
+
+Access Granted
+Part 8: Boolean Variables (5 Minutes)
+
+Show:
+
+is_student = True
+
+if is_student:
+    print("Welcome Student")
+
+Output:
+
+Welcome Student
+
+Explain
+
+Boolean values are:
+
+True
+False
+Mini Project (10 Minutes)
+
+Age Category Program
+
+age = int(input("Enter your age: "))
+
+if age < 13:
+    print("Child")
+elif age < 18:
+    print("Teenager")
+elif age < 60:
+    print("Adult")
+else:
+    print("Senior")
+
+Example
+
+Input:
+
+15
+
+Output:
+
+Teenager
+Guided Exercise
+
+Create a program that asks:
+
+What is your favorite sport?
+
+If sport is:
+
+Soccer
+
+Print:
+
+Great choice!
+
+Otherwise:
+
+Interesting sport!
+
+Solution
+
+sport = input("Favorite sport: ")
+
+if sport == "Soccer":
+    print("Great choice!")
+else:
+    print("Interesting sport!")
+Homework
+
+Create:
+
+grade_checker.py
+
+Requirements:
+
+Ask for:
+
+Student score
+
+Output:
+
+90+ = A
+80+ = B
+70+ = C
+60+ = D
+Below 60 = F
+
+Use:
+
+if
+elif
+else
+Success Criteria
+
+Student can:
+
+✅ Use if
+
+✅ Use else
+
+✅ Use elif
+
+✅ Compare values
+
+✅ Understand True and False
+
+✅ Build decision-making programs
+
+Week 5 Preview
+
+Next lesson:
+
+Loops – Repeating Tasks
+
+Students will learn:
+
+for
+while
+range()
+
+Example:
+
+for i in range(5):
+    print(i)
+
+Output:
+
+0
+1
+2
+3
+4

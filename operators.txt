@@ -1,0 +1,16 @@
+Operator Precedence- (Order of Operations)
+
+Python follows:
+
+()
+**
+* / // %
+== != > < >= <=
+not 
+and 
+Or
+
+Example:
+
+result = 5 + 2 * 3
+print (result)

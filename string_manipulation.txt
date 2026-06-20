@@ -1,0 +1,85 @@
+What is a String?
+
+A string is a sequence of characters.
+
+What is a String?
+
+A string is a sequence of characters.
+
+Printing Strings
+
+name = "John"
+
+print(name)
+
+String Indexing
+
+Each character has a position.
+
+String Indexing
+
+Each character has a position.
+
+name = "Python"
+
+Index:  0 1 2 3 4 5
+Value:  P y t h o n
+----------------------------------------------------------------------------------
+Accessing Characters
+
+name = "Python"
+
+print(name[0])
+
+Output: P
+
+print(name[3])
+
+Output:
+
+h
+----------------------------------------------------------------------------------
+Negative Indexing
+
+name = "Python"
+
+print(name[-1])
+
+Output:
+
+n
+----------------------------------------------------------------------------------
+
+print(name[-2])
+
+Output 
+
+o
+-----------------------------------------------------------------------------------
+String Length
+
+name = "Python"
+
+print(len(name))
+
+Output:
+
+6
+
+String Slicing
+
+Extract part of a string
+
+name = "Python"
+
+print(name[2:5])
+
+Output:
+
+Pyt
+
+Converting Characters
+
+name = "python"
+
+print(name.capitalise())

@@ -1,0 +1,187 @@
+Week 3:
+
+For Loops and Iteration
+
+Covered:
+
+Variables
+DataTypes
+Input/Output
+Operators
+Conditionals (if)
+Booleans
+while Loops
+Functions
+Lists
+
+Todays lesson will cover 'FOR' Loops:
+..................................................................
+for i in range(5):
+    print("HEllo")
+..................................................................
+for i in range(5):
+    print(i)
+..................................................................
+range( start, stop)
+
+for i in range(1, 6):
+    print(i)
+.................................................................
+
+range(start,stop,step)
+
+for i in range(0, 11, 2):
+    print(i)
+..................................................................
+
+Count backwards
+
+for i in range(11, 0, -2):
+    print(i)
+-------------------------------------------------------------------
+
+Customers = [
+    "John",
+    "Mary",
+    "Peter"
+]
+
+for Customer in Customers
+    print(Customer)
+Output: prints each customers one after the other
+
+--------------------------------------------------------------------
+
+Real World Ecample
+
+Customers = [
+    "John",
+    "Mary",
+    "Peter"
+]
+
+
+for customer in Customers:
+    print(
+           f"Processing {customer}"
+    )
+-------------------------------------------------------------------
+
+Using len()
+
+fruits = [
+    "Apples",
+    "Bananas",
+    "Pears"
+]
+
+print(len(fruits))
+
+--------------------------------------------------------------------
+
+Accessing Indexes using for Loops
+
+fruits = [
+    "Apples",
+    "Bananas",
+    "Pears"
+]
+
+for i in range(len(fruits)):
+    print(i, fruits[i])
+---------------------------------------------------------------------
+
+Nested Loops
+
+A loop inside another loop.
+
+for row in range(3):
+    for column in range(3):
+        print("*", end=" ")
+
+    print()
+
+Output:
+
+* * *
+* * *
+* * *
+--------------------------------------------------------------------------------------
+for i in range(5):
+
+    for j in range(i+1):
+        print("*", end=" ")
+
+print()
+
+*
+* *
+* * *
+* * * *
+* * * * *
+
+.............................................................................
+
+summing numbers:
+
+total = 0
+
+for i in range(1, 6):
+    total += if
+
+print(total)
+
+Output: 15
+
+...............................................................................
+
+Finding an Average
+
+marks = [70, 85, 92, 68, 88]
+
+total = 0
+
+for mark in marks:
+    total += mark
+
+average = total / len(marks)
+
+print(average)
+#######################################################################################
+
+Mini Project:
+
+
+
+Student Grade Analyzer
+
+Requirements:
+
+Store 5 grades in a list
+Print all grades
+Calculate total
+Calculate average
+Display highest grade
+Display lowest grade
+
+grade = []
+
+for i in range(5):
+
+    grade = float(
+        input(
+            f"Enter grade {i+1}:"
+        )
+    )
+
+    grades.append(grade)
+
+print(grades)
+
+
+
+   
+
+
+
+    

@@ -1,0 +1,91 @@
+Lists:
+
+fruit = ["Apple", "Banana", "Pineapple", "Orange"]
+Index:     0         1           2          3
+---------------------------------------------------
+If we ant to only pick one value from the list we use our print statement and the idex value of that item e.g:
+
+print(fruit[0]) # Apple
+
+CHANGING LIST VALUES:
+
+* Lists are mutable - lists can be changed
+
+fruit = ["Apple", "Banana", "Pineapple", "Orange"]
+
+fruit[1] = "Mang0"
+
+print(fruit)
+
+ADDING ITEMS:
+append() - simply add to the end
+
+fruit = ["Apple", "Banana", "Pineapple", "Orange"]
+
+fruit.append("Guava")
+
+print(fruit)
+
+REMOVING ITEMS:
+remove()
+
+fruit = ["Apple", "Banana", "Pineapple", "Orange"]
+
+fruit.remove("Apple")
+
+print(fruit)
+
+pop() - removes by the index from a list
+
+fruit = ["Apple", "Banana", "Pineapple", "Orange"]
+
+fruit.pop(1)
+
+print(fruit)
+
+LENGTH OF A LIST:
+
+len()
+
+fruit = ["Apple", "Banana", "Pineapple", "Orange"]
+
+print(len(fruit))
+
+LOOPING THROUGH LISTS:
+
+fruit = ["Apple", "Banana", "Pineapple", "Orange"]
+
+for fruits in fruit
+    print(fruits)
+
+LIST OF NUMBERS:
+
+numbers = [1,2,3,4]
+
+print(sum(numbers))
+
+
+To check the highest value in the list:
+
+numbers = [1,2,3,4]
+
+print(max(numbers))
+
+To check the lowest number in the list:
+
+numbers = [1,2,3,4]
+
+print(min(numbers))
+
+
+
+
+
+
+
+
+
+
+
+
+
