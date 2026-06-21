@@ -419,17 +419,126 @@ Nested Dictionaries:
 
 A dictinary inside another dictionary
 
-employee ={
+employee = {
     "name": "Sarah",
     "departmenmt": "IT",
-    "salary": 5000
+    "salary": 5000,
 
     "address" : {
-        "city" : "Toronto"
+        "city" : "Toronto",
         "country" : "Canada"
     }
 }
 
 print (
-    employee["address"]["city"]
+    employee["address"]["city]
 )
+
+=================================================================================
+
+Dictionaries and Lists Together:
+
+employees = [
+    {
+        "name": "John",
+        "salary": 80000
+    },
+
+    {
+        "name": "Sarah",
+        "salary": 90000
+    }
+]
+
+print(
+    employees[0]["name"]
+)
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+|------------------|  
+| JSON Connection  |
+|------------------|
+
+Dict e.g
+
+student = {
+    "name": "John",
+    "age": 22
+}
+
+JSON
+GET:     wwww.google.com/names/students
+{
+    "name": "John"
+    "age": 20
+}
+
+==============================================================================
+
+Student Database
+
+student = {}
+
+student["name"] = input(
+    "Name: "
+)
+
+student["age"] = int(
+    input("Age: ")
+)
+
+student["grade"] = float(
+    input("Grade: ")
+)
+
+print(student)
+
+---------------------------------------------------------------------------------
+Mini Project
+
+Employee Directory
+
+Requirements:
+
+Store 3 employees
+Name
+Department
+Salary
+
+Display:
+
+Name: John
+Department: IT
+Salary: 80000
+
+Homework:
+
+1. Create a dictionary for a car:
+
+car = {
+    "make": "",
+    "model": "",
+    "year": 0
+}
+
+ask:::::::::::print all keys and values
+
+2. Store students inside a list
+
+students = [
+    {
+        "name": "John",
+        "grade": 85
+    },
+
+    {
+        "name": "Sarah",
+        "grade": 90
+    }
+]
+
+ask::::::::::::::: Print all student names and grades
+
+=======================================================================================
+
+Files and Exception Handling:

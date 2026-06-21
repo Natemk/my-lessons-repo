@@ -189,7 +189,7 @@ print(
 #for value in student.values():
 #    print(value)
 '''
-
+'''
 employee = {
     "name": "Sarah",
     "departmenmt": "IT",
@@ -204,3 +204,38 @@ employee = {
 print (
     employee["address"]["city"]
 )
+
+'''
+'''
+employees = [
+    {
+        "name": "John",
+        "salary": 80000
+    },
+
+    {
+        "name": "Sarah",
+        "salary": 90000
+    }
+]
+
+print(
+    employees[0]["name"]
+)
+'''
+
+student = {}
+
+student["name"] = input(
+    "Name: "
+)
+
+student["age"] = int(
+    input("Age: ")
+)
+
+student["grade"] = float(
+    input("Grade: ")
+)
+
+print(student)
