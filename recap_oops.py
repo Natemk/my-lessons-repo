@@ -148,9 +148,18 @@ sentence=" ".join(words)
 print(sentence)
 
 -------------------------------------------------------------------------------------
-'''
+
 email = "John@gmail.com"
 
 print(
     email.endswith("@gmail.com")
+)
+
+========================================
+'''
+
+message = "bananas"
+
+print(
+    message.count("a")
 )

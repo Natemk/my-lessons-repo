@@ -189,3 +189,87 @@ Output: True
 ---------------------------------------------------------------------------
 
 
+Counting Occurances:
+
+count()
+
+message = "bananas"
+
+print(
+    message.count("a")
+)
+
+Output = 3
+
+------------------------------------------------------------------------------------
+
+f-Strings
+Modern way to build Strings
+
+Old way:
+
+name= "John"
+
+print("Hello " + name)
+
+New Way:
+
+name = "John"
+
+print(f"Hello {name}")
+-------------------------------------------------------------------------------------
+
+Multiple Variables
+
+name = "John"
+
+age = 25
+
+print(
+    f"{name} is {age} years old"
+)
+-------------------------------------------------------------------------------------
+
+String Validation
+
+Check a users input
+
+password = input(
+    "Enter your Password:"
+)
+
+if len(password) >= 8:
+    print("strong password")
+else:
+    print("Weak Password")
+
+----------------------------------------------------------------------------------------
+
+Building a username Generator
+
+first_name = input(
+    "First Name:"
+)
+
+last_name = input(
+    "Last Name:"
+)
+
+username = (
+    first_name.lower()
+    +
+    "."
+    +
+    last_name.lower()
+)
+
+print(username)
+==================================================================================
+
+Classwork:
+
+Ask user for their full name.
+Convert it to uppercase.
+Count how many characters it contains.
+Remove extra spaces.
+Replace spaces with underscores.
