@@ -87,7 +87,7 @@ healthy_fruits = fruits.split()
 
 print(healthy_fruits)
 
-'''
+
 
 words = [
     "Python",
@@ -102,3 +102,55 @@ sentence = " ".join(words)
 print(sentence)
 
 
+
+#Shortcut Slicing
+
+name= "Python"
+
+print(name[:3]) # From the end is inclusive and from start is nomn inclusive
+
+#Output
+#Pyth
+
+
+
+name = "python"
+
+print(name.upper())
+
+
+message = "I like Python"
+
+print(
+    message.replace(
+        "Python",
+        "Java"
+    )
+)
+
+
+sentence = "Apple Banana Orange"
+
+words = sentence.split()
+
+print(words)
+
+.....................................
+
+words = [
+    "Python",
+    "is",
+    "fun"
+]
+
+sentence=" ".join(words)
+
+print(sentence)
+
+-------------------------------------------------------------------------------------
+'''
+email = "John@gmail.com"
+
+print(
+    email.endswith("@gmail.com")
+)

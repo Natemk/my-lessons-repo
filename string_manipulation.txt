@@ -65,7 +65,7 @@ print(len(name))
 Output:
 
 6
-
+-----------------------------------------------------------------------------
 String Slicing
 
 Extract part of a string
@@ -77,9 +77,115 @@ print(name[2:5])
 Output:
 
 Pyt
+------------------------------------------------------------------------------
+Shortcut Slicing
 
+name= "Python"
+
+print(name[ :4]) # From the end is inclusive and from start is nomn inclusive
+
+Output
+Pyth
+------------------------------------------------------------------------------
 Converting Characters
 
 name = "python"
 
 print(name.capitalise())
+------------------------------------------------------------------------------
+
+Converting Case:
+
+upper()
+
+name = "python"
+
+print=(name.upper())
+
+-----------------------------------------------------------------------------------
+
+lower()
+
+name="PYTHON"
+
+print(name.lower())
+
+-----------------------------------------------------------------------------------
+
+Capitalizing
+
+name="john"
+print(name.capitalize())
+
+-----------------------------------------------------------------------------------
+
+Replace Text
+
+message = "I like Python"
+
+print(
+    message.replace(
+        "Python",
+        "Java"
+    )
+)
+
+Output : I like Java
+--------------------------------------------------------------------------------------
+
+Removing Spaces
+
+name = " Nate "
+
+print(name.strip())
+
+--------------------------------------------------------------------------------------
+
+Splitting Strings:
+
+sentence = "Apple Banana Orange"
+
+words = sentence.split()
+
+print(words)
+----------------------------------------------------------------------------------
+
+joining Strings
+words = [
+    "Python",
+    "is",
+    "fun"
+]
+
+sentence=" ".join(words)
+
+print(sentence)
+..................................................................................
+
+Checking Contents of a string
+
+startswith():
+
+email = "John@gmail.com"
+
+print(
+    email.startswith("John")
+)
+
++++++++++++++++++++++++
+
+endswith()
+
+---------------------------------------------------------------------------------------
+
+Searching
+
+message = "Python Programming"
+
+print("Python" in message)
+
+Output: True
+
+---------------------------------------------------------------------------
+
+
