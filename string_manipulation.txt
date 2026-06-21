@@ -273,3 +273,163 @@ Convert it to uppercase.
 Count how many characters it contains.
 Remove extra spaces.
 Replace spaces with underscores.
+
+*****************************************************************************
+Dictionaries:
+
+Dicts:
+
+**** VERY IMPORTANT DATA STRUCTURE IN PYTHON *****
+
+-Topics Covered:
+
+1. Variables
+2. Lists
+3. Functions
+4. Loops
+5. Strings
+
+Dictionaries:
+
+Heavily used in APIs, JSON, Databases, MAchine Learning, Web Development
+
+Lesson Objectives:
+
+1. Create Dictionaries
+2. Access Values
+3. Add and update Data
+4. Remove Data
+5. Loop through Dictionaries
+6. Work with nested Dictionaries
+
+What is a Dictionary?
+
+A dictionary stores data as:
+
+Key ----> Value
+Example
+
+student = {
+    "name": "John",
+    "age": 20,
+    "grade": 85
+}
+
+name -----> John
+age  -----> 20
+grade-----> 85
+
+Why not use a list?
+
+Bad:
+
+student = [
+    "John",
+    20,
+    85
+]
+
+what does this mean:
+
+student[2]
+
+---------------------------------------------
+
+Good:
+
+student = {
+    "name": "John",
+    "age": 20,
+    "grade": 85
+}
+
+Now 
+
+student["grade"]
+-------------------------------------------------------------------------------
+
+using get()
+
+Bad:
+
+print(student["salary"])
+
+Output = KeyError
+
+Good:
+
+print(
+    student.get("salary", "not found")
+)
+
+Output : not found
+---------------------------------------------------------------------------
+
+looping though keys
+
+student = {
+    "name": "John",
+    "age": 20,
+    "grade": 85
+}
+
+for key in student:
+    print(key)
+
+----------------------------------------------------------------------------=--
+
+looping though Values
+
+student = {
+    "name": "John",
+    "age": 20,
+    "grade": 85
+}
+
+for value in student.values():
+    print(value)
+
+-------------------------------------------------------------------------------
+looping through both values and keys
+
+student = {
+    "name": "John",
+    "age": 20,
+    "grade": 85
+}
+
+for key, value  in student.items():
+    print(key, ":", value
+    )
+-------------------------------------------------------------------------------
+
+employee ={
+    "name": "Sarah",
+    "departmenmt": "IT",
+    "salary": 5000
+}
+
+print(
+    employee("salary", "name")
+)
+
+===============================================================================
+
+Nested Dictionaries:
+
+A dictinary inside another dictionary
+
+employee ={
+    "name": "Sarah",
+    "departmenmt": "IT",
+    "salary": 5000
+
+    "address" : {
+        "city" : "Toronto"
+        "country" : "Canada"
+    }
+}
+
+print (
+    employee["address"]["city"]
+)

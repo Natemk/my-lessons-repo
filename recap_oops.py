@@ -156,10 +156,51 @@ print(
 )
 
 ========================================
-'''
+
 
 message = "bananas"
 
 print(
     message.count("a")
+)
+
+'''
+'''
+student = {
+    "name": ["John", "Jane", "Doe"],
+    "age": [20, 30, 25],
+    "grade": [85, 90, 78]
+}
+
+#Now 
+#student["name"]= "Jane"
+
+#student["City"] = "New York"
+
+#student.pop("age")
+
+for key, value  in student.items():
+    print(key, ":", value
+    )
+print(
+    student.get("name", "Salary information not available")
+)
+
+#for value in student.values():
+#    print(value)
+'''
+
+employee = {
+    "name": "Sarah",
+    "departmenmt": "IT",
+    "salary": 5000,
+
+    "address" : {
+        "city" : "Toronto",
+        "country" : "Canada"
+    }
+}
+
+print (
+    employee["address"]["city"]
 )
