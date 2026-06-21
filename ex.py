@@ -35,7 +35,7 @@ lowest = min(grades)
 print("Lowest grade:", (lowest))
    
         
-'''
+
 
 # Create an empty list to store student names
 students = []
@@ -91,3 +91,20 @@ if not invalid_grade and len(grades) == len(students):
         student, grade = student_grades[i]
         print(f"{student}: {grade}")
     
+'''
+#captures user input for name
+name = input("What is your full name? ")
+
+#prints name in uppercase 
+print(f" hello, {name.upper()}")
+
+#prints the number of characters in the name
+print(f"your name has {len(name)} characters in it.")
+
+#removes whitespace from the name and prints it
+result = name.strip()
+replacement = result.replace(" ", "_")
+print(f"Your name with whitespace removed: {result}")
+#replaces spaces in the name with underscores and prints it
+
+print(f"Your name with spaces replaced by underscores: {replacement}")
