@@ -1,7 +1,0 @@
-def show_menu():
-    print("\n----------- INVENTORY -----------")
-    print("Options:")
-    print("  add    - Add an item")
-    print("  remove - Remove an item")
-    print("  view   - View all items")
-    print("  exit   - Exit the program")
