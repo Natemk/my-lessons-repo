@@ -1,0 +1,86 @@
+Recap:
+
+Dictionaris:
+
+Why Dictionaries:
+
+student = ["John", 22, "Hamilton", "Python"] # The problem with Lists is that they just have values and we can identify the index but not identify what the value key or value meaning is.
+
+A Dictionary would allow us to store those data labels.
+
+student ={
+    "name": "John",
+    "age": "22",
+    "city": "Hamilton"
+}
+
+Accessing Values:
+
+We jsut use the key e.g to access the value John.
+
+print(student["name"])  -----> John
+
+Adding new values to dictionaries:
+
+maybe we have an empty dictionary:
+
+student = {}
+
+student["course"] "Python"
+
+print(student) --------------------> {"course": "Python"}
+
+====================================================================================
+
+Updating Values:
+
+student ={
+    "name": "John",
+    "age": "22",
+    "city": "Hamilton"
+}
+
+student["city"] = Toronto
+
+print(student)
+
+-----------------------------------------------------------------------------------
+
+Removing Items from a Dictionary --- pop()
+
+student ={
+    "name": "John",
+    "age": "22",
+    "city": "Hamilton"
+}
+
+student.pop("city")
+
+print(student)  ----------------> {"name": "John", "age": "22"}
+-----------------------------------------------------------------------------------
+Dictionary Methods:
+
+keys()
+
+this returns all keys e.g
+
+student ={
+    "name": "John",
+    "age": "22",
+    "city": "Hamilton"
+}
+
+print(student.key()) ----prints all keys as dict_keys (["name", "age", "city"])
+
+values()
+
+print(student.values()) --------------> (["John", "22", "Hamilton"])
+
+items()
+
+print(student.items()) ---------------> prints all key value pairs as a list.
+
+-----------------------------------------------------------------------------------------
+
+Nested Data:
+

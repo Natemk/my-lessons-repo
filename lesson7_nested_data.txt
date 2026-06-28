@@ -1,0 +1,42 @@
+Nested Data
+
+Show what real-world data loks like:
+
+student ={
+    "name": "John",
+    "age": "22",
+    "city": "Hamilton"
+    "subjects": ["Python", "Git", "Linux"]
+}
+
+print(student["subject"][1]) ------------> Git
+
+-------------------------------------------------------------------------------------
+
+Personal Contact Book
+
+Requirements:
+
+Create a dictionary containing:
+
+Name
+Phone Number
+Email
+City
+
+Display all information using a loop.
+
+Allow the user to update one field.
+
+Example:
+
+Name: John
+Phone: 123456789
+Email: john@gmail.com
+City: Hamilton
+
+Then ask:
+
+What field do you want to update?
+
+Update the value and display the new contact information.
