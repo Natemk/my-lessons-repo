@@ -40,3 +40,14 @@ Then ask:
 What field do you want to update?
 
 Update the value and display the new contact information.
+
+What is a dictionary?
+What is the difference between a list and a dictionary?
+What is a key?
+What is a value?
+How do you add a new key-value pair?
+How do you update a value?
+How do you remove a key?
+What is the difference between keys(), values(), and items()?
+How do you loop through a dictionary?
+When would you choose a dictionary instead of a list?
