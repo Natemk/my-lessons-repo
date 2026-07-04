@@ -40,6 +40,8 @@ Then ask:
 What field do you want to update?
 
 Update the value and display the new contact information.
+---------------------------------------------------------------------------------
+Exercise: Graded
 
 What is a dictionary?
 What is the difference between a list and a dictionary?
@@ -51,3 +53,12 @@ How do you remove a key?
 What is the difference between keys(), values(), and items()?
 How do you loop through a dictionary?
 When would you choose a dictionary instead of a list?
+
+Chooose one:
+
+Build After This Lesson
+Contact Book
+Inventory Tracker
+Student Management System
+Employee Records System
+Simple Configuration Files

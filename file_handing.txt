@@ -1,0 +1,67 @@
+Files alow us to store data more permanantly.
+
+RAM: temporary memory
+HARD drive/SSD = permanent storage
+Files allow programs to store information permanantly
+
+PART 1:
+
+Opening a file in Python
+
+
+file = open("notes.txt")
+
+Part2:
+
+Reading a file : read()
+
+suppose: notes.txt
+
+file = open("notes.txt")
+
+content = file.read()
+
+print(content)
+
+Part 3:
+
+File closing. close()
+
+file.close()
+
+ALways close files after you have worked with it.
+
+Part 4:
+
+Writing to a file. Mode: "w"
+
+The "w" mode means:
+
+open("file.txt, "w")
+
+example:
+
+file = open("notes.txt, "w")
+file.write("Python programming")
+file.close
+
+------------------------------------------------------------------------
+
+Part 5:
+
+Appending to a file
+
+file = open("students.txt", "a")
+file.write("\nKenan")
+file.close()
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Modern cleaner code:
+
+with open("notes.txt", "r") as file:
+     content = file.read()
+print(content)
+
+===========++++++++++++++++++++++++++++++++++++++++++
+
+file = open("fruits.txt)

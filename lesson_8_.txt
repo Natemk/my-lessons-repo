@@ -1,0 +1,50 @@
+Reading all lines into a list:
+
+with open("fruits.txt") as file:
+     fruits = file.readlines()
+
+print(fruits)
+
+r readlines
+w write (overwite)
+a append
+x create file
+
+
+name = input("Enter Student Name: ")
+
+with open("students.txt", "a") as file:
+    file.write(name + "\n")
+
+print("Student Registered")
+
+
+Error Handling
+
+age = int(input("Enter age"))
+
+print(Age)
+
+twenty
+
+number = int("python")
+
+Using try and Exception
+
+Basic structure:
+
+try:
+
+#risky Covered
+
+except:
+
+# recovery code
+
+
+
+try:
+   age = int(input("Enter Age:"))
+   print(age)
+except:
+   print("Invalid Input)
