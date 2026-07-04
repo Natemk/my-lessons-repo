@@ -1,0 +1,37 @@
+Part 1:
+ATM Simulation
+
+Menu:
+
+1. Deposit
+2. Withdraw
+3. Check Balance
+4. Exit
+
+Rules:
+
+Cannot withdraw more than balance.
+Cannot deposit negative values.
+Handle invalid numbers.
+Use:
+Functions
+Loops
+Dictionaries or variables
+Exception handling
+
+This project combines nearly everything learned so far
+
+Part 2:
+
+answer:
+
+What is an exception?
+Why do programs crash?
+What does try do?
+What does except do?
+What is the difference between except: and except ValueError:?
+What does else do?
+What does finally do?
+What is ZeroDivisionError?
+What is FileNotFoundError?
+When would you use raise?

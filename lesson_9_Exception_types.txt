@@ -1,0 +1,175 @@
+What is an exception:
+
+An exception is an error that occurs while a program is running.
+
+    e.g
+
+***Division by zero (0)
+
+print(10/0)    output > ZeroDivisionError
+
+**Invalid Integer
+
+int("Hello")  output > ValueError
+
+**Missing Variable
+print(name)   output > NameError
+
+**Missing File
+
+with open("flask.txt") as file:
+    print(file.read())
+
+    output will be > FileNotFoundError
+
+Questions:
+
+number = int("Python") -----error is a ValueError
+
+Using try and except
+
+                                        Basic structure:
+
+try:
+
+   #risky code
+
+
+except:
+
+   #recovery code
+
+try:
+    age = int(input("Enter age:"))
+    print(age)
+
+except:
+    print("Wakupenga here? Please enter a valid number.")
+
+
+    Enter age: jhy
+    Invalid age entered
+
+code to get above:
+
+try:
+    age =int(input("Enter age:"))
+
+except:
+    print("Invalid age entered")
+
+                Catching specific Exceptions:
+
+exception: XXXXX Too Broad XXXXX
+
+need to use specific exceptions:
+
+try:
+
+    age = int(input("Enter Age: "))
+
+except ValueError:
+    print("Please enter a number")
+
+Exercise:
+
+Handle:
+       
+      number = int(input())
+
+with:
+
+except ValueError
+
+
+Handling Disvision Error:
+
+example:
+
+num1 = int(input("Number 1: "))
+num2 = int(input("Number 2: "))
+
+print (num1/num2)
+
+what if we then make num2 = 0   >>> output: ZeroDivisionError
+
+solution:
+
+try:
+
+   num1 = int(input("Number 1: "))
+   num2 = int(input("Number 2: "))
+
+   print (num1/num2)
+
+except ZeroDivisionError:
+
+   print("Cannot Divide by Zero")
+
+Multiple Except Blocks:
+
+Because in a real world scenario multiple errors can occur:
+
+try:
+    num1 = int(input("Number 1: "))
+    num2 = int(input("Number 2: "))
+
+    print(num1/num2)
+
+except ValueError:
+    print("Please enter valid numbers")
+
+except ZeroDivisionError:
+    print("Cannot divide by zero")
+
+
+finally Block:
+
+Runs whether an error happens or not.
+
+Structure:
+
+try:
+    pass
+
+except:
+    pass
+
+finally:
+    pass
+
+Example:
+
+try:
+     file = open("teams.txt")
+
+except FileNotFoundError:
+    print("File missing")
+
+finally:
+    print("Program Complete")
+
+----------------------------------------------------------------------------------
+
+Capturing Error Message:
+
+Instead of generic messages
+
+except ValueError:
+     print("Invalid input")
+
+except ValueError as error:
+    print(error)
+
+Raising your own Exceptions:
+
+age = int(input("Age: "))
+
+if age < 0:
+   raise ValueError("Age cannot be less than 0 or a negative value")
+
+
+
+
+
+
