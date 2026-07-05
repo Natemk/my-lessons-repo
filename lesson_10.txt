@@ -1,0 +1,180 @@
+Modules and Imports:
+
+Objectives:
+
+1. Learn how Python code is organized across multiple files and how to use built in modules such as 
+   - math
+   - random
+   - datetime
+2. Creating and importing your own modules
+3. Understand what a module is.
+4. Understand why modules exist.
+5. Import built-in python modules.
+6. Use functions from built-in modules.
+7. Import your own python files.
+8. Organize code across multiple files.
+9. Undertand the difference between 
+   - a module 
+   - a package
+   - a library
+
+Why Modules?
+
+Professional software is not written in one script.
+
+Its written across multiple differenmt files. 
+
+This helps us 
+1. mantain our code,
+2. debug our code,
+3. allows us to collaborate.
+
+SO its simply a Python file.
+
+example python project:
+
+project /
+
+main.py
+
+calculator.py
+
+student.py
+
+database.py
+
+each file performs a different task.
+
+Importing modules:
+
+                                         calculator.py
+
+def add(a, b):
+    return a + b
+
+def subtract(a, b):
+    return a - b
+
+                                          main.py
+
+import calculator
+
+print(calculator.add(10, 5))
+print(calculator.subtract(20, 8))
+
+
+Aliases:
+
+Module names can be too long:
+
+Use Aliases
+
+e.g
+
+import calculator as calc
+
+print(calc.add(4, 5))
+
+e.g 2:
+
+import math as m
+
+print(m.sqrt(25))
+
+
+Python's internal modules:
+
+Python includes many useful modules.
+
+1. from math import sqrt, power, pi, add
+
+print(sqrt(81))
+
+print(pi)
+
+print(add(4,3))
+
+exercise:
+
+Area = π × r²
+
+calculate the area of a circle given the diameter is 14cm
+calculate the radius of that circle
+
+
+The random module:
+
+Randomness is useful in:
+
+Games
+Password Generation
+Simulations
+
+import random
+
+print(random.randint(1, 100))
+
+
+Random Choice:
+
+import random
+
+fruits =["Appple", "Orange", "Banana"]
+
+print(random.choice(fruits))
+
+
+The datetime module:
+
+from datetime import datetime
+
+print(datetime.now())
+
+                                                   Homework:
+
+Student Management System (Multi-File)
+
+Project Structure
+
+student_system/
+
+main.py
+
+student.py
+
+file_manager.py
+
+utilities.py
+student.py
+
+Responsible for:
+
+Add student
+Delete student
+file_manager.py
+
+Responsible for:
+
+Save file
+Read file
+utilities.py
+
+Responsible for:
+
+Calculate averages
+Search students
+main.py
+
+Menu
+
+1 Add Student
+
+2 View Students
+
+3 Search Student
+
+4 Delete Student
+
+5 Exit
+
+The student is required to use imports between files rather than placing all code into one file.
