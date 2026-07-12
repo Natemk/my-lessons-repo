@@ -15,7 +15,7 @@ FILE_NAME = "students.txt"
 def save_students(student_data):
     with open(FILE_NAME, "w", encoding="utf-8") as file:
         for student_id, student_info in student_data.items():
-            file.write(f"{student_id},{student_info['name']},{student_info['grade']},{student_info['student_id']}\n")
+            file.write(f"{student_id},{student_info['name']},{student_info['grade']}\n")
 
 
 # Load students from the text file back into memory
@@ -29,10 +29,10 @@ def load_students():
                     continue
 
                 parts = [part.strip() for part in line.split(",")]
-                if len(parts) != 4:
+                if len(parts) != 3:
                     continue
 
-                student_id, name, grade_text, stored_student_id = parts
+                student_id, name, grade_text = parts
 
                 try:
                     grade = float(grade_text)
@@ -42,7 +42,7 @@ def load_students():
                 students[student_id] = {
                     "name": name,
                     "grade": grade,
-                    "student_id": stored_student_id
+                    "student_id": student_id
                 }
             return students
     except FileNotFoundError:
