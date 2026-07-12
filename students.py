@@ -22,7 +22,7 @@ def add_student():
     
     if not student_id.isdigit():
         raise ValueError("Student ID must be numeric.")
-    elif not isinstance(grade, (int, float)):
+    elif not isinstance(grade, (float)):
         raise ValueError("Grade must be a numeric value.")
     elif not all(part.isalpha() for part in name.split() if part):
         raise ValueError("Name must contain only alphabetic characters and spaces.")
