@@ -1,0 +1,135 @@
+Object Oriented Programming:
+
+Objects:
+
+Are things around us e.g a car, a computer
+
+but all these things have certain properties:
+
+A car has the following properties:
+
+1. Colour
+2. Engine
+3. Fuel
+4. Speed
+5. Manufacturer
+
+behaviours:
+
+1. Drive
+2. Brake
+3. Accelarate
+4. Reverse
+
+
+student (object)
+
+Properties:
+Name
+Age
+Grade
+
+Behaviours:
+study()
+Graduate()
+
+Student Class
+
+John
+
+Sarah
+
+Mike
+
+Class Student:
+      pass
+
+class Student:
+    pass
+
+student1 = Student()
+
+student1.name = "John"
+student1.age = 20
+
+print(student1.name)
+
+student2 = Student()
+student3 = Student()
+
+Constructors (__init__) - a constructor is a special method that Python Automatically executes every time a new object is created
+
+__init__()
+
+class Student:
+
+    def __init__(self)
+        print("Student created")
+
+student1 = Student()
+
+WHYb DO CONSTRUCTORS EXIST?:
+
+Imagine Building a banking Application:
+
+Without a Constructor:
+
+Class BankAcccount:
+    pass
+
+account = BankAccount()
+
+account.name ="JOhn"
+account.balance =1000
+account.account_number="123456"
+
+account2 = BankAccount()
+
+account2.name = "Sarah"
+
+print(account2.balance)
+
+Python will raise an error stating:
+
+AttributeError:
+'BankAccount' object has no attribute 'balance'
+
+The object was never fully initialized.
+
+
+--------------------------------------------------------------------------------------------------------
+
+The Constructor Solves this problem:
+
+Instead:
+
+class BankAccount:
+
+    def __init__(self, name, balance, account_number):
+
+    self.name = name
+    self.balance = balance
+    self.account_number = account_number
+
+
+-------->
+
+account = BankAccount(
+    "John",
+    1000,
+    "123456"
+)
+
+Understanding Every Line:
+
+class Student:
+
+      def __init__(self, name, age):
+
+      self.name =name
+      self.age = age
+
+
+      student = Student("John", 20)
+
+Can Constructors Do More?
