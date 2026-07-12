@@ -1,6 +1,7 @@
 import students
 
 
+# Calculate the average grade of all students
 def calculate_average_grade():
     if not students.student:
         return 0
@@ -9,6 +10,7 @@ def calculate_average_grade():
     return round(sum(grades) / len(grades), 2)
 
 
+# Search for a student by ID and return the result as a dictionary
 def search_student(student_id):
     if student_id in students.student:
         student_data = students.student[student_id]
