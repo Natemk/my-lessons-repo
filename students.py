@@ -15,46 +15,64 @@ def view_students():
 
 
 # Add a new student to the dictionary and save it to the file
-def add_student(): 
-    name = input("Enter student name: ")
-    grade = float(input("Enter student grade: "))
-    student_id = input("Enter student ID: ")
-    
-    if not student_id.isdigit():
-        raise ValueError("Student ID must be numeric.")
-    elif not isinstance(grade, (float)):
-        raise ValueError("Grade must be a numeric value.")
-    elif not all(part.isalpha() for part in name.split() if part):
-        raise ValueError("Name must contain only alphabetic characters and spaces.")
-    
-    
-    if student_id in student:
-        print(f"Student ID {student_id} already exists. Please use a unique ID.")
-        return
-    else:  
+def add_student():
+    try:
+        name = input("Enter student name: ").strip()
+        grade_text = input("Enter student grade: ").strip()
+        student_id = input("Enter student ID: ").strip()
+
+        if not name:
+            raise ValueError("Name cannot be empty.")
+        if not all(part.isalpha() for part in name.split() if part):
+            raise ValueError("Name must contain only alphabetic characters and spaces.")
+
+        try:
+            grade = float(grade_text)
+        except ValueError:
+            raise ValueError("Grade must be a numeric value.") from None
+
+        if not student_id.isdigit():
+            raise ValueError("Student ID must be numeric.")
+
+        if student_id in student:
+            raise ValueError(f"Student ID {student_id} already exists. Please use a unique ID.")
+
         student[student_id] = {'name': name, 'grade': grade, 'student_id': student_id}
         file_manager.save_students(student)
         print(f"Student {name} added successfully.")
+    except ValueError as error:
+        print(f"Error: {error}")
+    except Exception as error:
+        print(f"Unexpected error: {error}")
+
 
 # Search for a student using their ID
 def search_student():
-    student_id = input("Enter student ID to search: ")
-    if student_id in student:
-        student_data = student[student_id]
-        print(f"ID: {student_id}, Name: {student_data['name']}, Grade: {student_data['grade']}")
-    else:
-        print(f"No student found with ID {student_id}.")
+    try:
+        student_id = input("Enter student ID to search: ").strip()
+        if student_id in student:
+            student_data = student[student_id]
+            print(f"ID: {student_id}, Name: {student_data['name']}, Grade: {student_data['grade']}")
+        else:
+            print(f"No student found with ID {student_id}.")
+    except Exception as error:
+        print(f"Error: {error}")
 
 
 # Delete a student by their ID
 def delete_student():
-    student_id = input("Enter student ID to delete: ")
-    if not student_id.isdigit():
-        raise ValueError("Student ID must be numeric.")
+    try:
+        student_id = input("Enter student ID to delete: ").strip()
+        if not student_id.isdigit():
+            raise ValueError("Student ID must be numeric.")
 
-    if student_id in student:
-        del student[student_id]
-        file_manager.save_students(student)
-        print(f"Student with ID {student_id} deleted successfully.")
-    else:
-        print(f"No student found with ID {student_id}.")
+        if student_id in student:
+            del student[student_id]
+            file_manager.save_students(student)
+            print(f"Student with ID {student_id} deleted successfully.")
+        else:
+            print(f"No student found with ID {student_id}.")
+    except ValueError as error:
+        print(f"Error: {error}")
+    except Exception as error:
+        print(f"Unexpected error: {error}")

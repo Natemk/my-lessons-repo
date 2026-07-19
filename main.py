@@ -1,5 +1,4 @@
 import students
-import file_manager
 import utilities
 
 
@@ -14,22 +13,34 @@ def main():
         print("5. Delete Student")
         print("6. Exit")
 
-        choice = input("Select an option: ")
+        choice = input("Select an option: ").strip()
 
-        if choice == '1':
-            students.add_student()
-        elif choice == '2':
-            utilities.calculate_average_grade()
-        elif choice == '3':
-            students.view_students()
-        elif choice == '4':
-            students.search_student()
-        elif choice == '5':
-            students.delete_student()
-        elif choice == '6':
-            break
-        else:
-            print("Invalid option. Please try again.")
+        try:
+            if choice == '1':
+                students.add_student()
+            elif choice == '2':
+                result = utilities.calculate_average_grade()
+                if result is None:
+                    print("No average grade available.")
+                else:
+                    print(f"Average Grade: {result}")
+            elif choice == '3':
+                students.view_students()
+            elif choice == '4':
+                students.search_student()
+            elif choice == '5':
+                students.delete_student()
+            elif choice == '6':
+                break
+            else:
+                print("Invalid option. Please try again.")
+        except Exception as error:
+            print(f"Error: {error}")
+
 
 if __name__ == "__main__":
     main()
+    
+#shop - location, product, price
+#construction -machinery, contract and site
+#math -divide, multiply, add, subtract
