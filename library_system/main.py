@@ -6,7 +6,7 @@ def display_books(books):
         print("No books available.")
         return
     for book in books:
-        print(book)
+        print(book.get_info())
 
 
 def main():

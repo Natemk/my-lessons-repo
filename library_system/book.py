@@ -17,6 +17,6 @@ class Book:
             return True
         return False
 
-    def __str__(self):
+    def get_info(self):
         status = "Available" if self.available else "Borrowed"
         return f"{self.title} by {self.author} (ISBN: {self.isbn}) - {status}"
