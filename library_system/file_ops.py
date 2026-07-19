@@ -3,6 +3,15 @@ Simple file operations for library system using txt files.
 Uses basic read, write, open, and append operations.
 """
 
+import os
+
+
+def ensure_directory_exists(filename):
+    """Create directory if it doesn't exist."""
+    directory = os.path.dirname(filename)
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory)
+
 
 def read_file(filename):
     """Read all lines from a txt file. Returns empty list if file doesn't exist."""
@@ -16,6 +25,7 @@ def read_file(filename):
 def write_file(filename, data):
     """Write data to file (overwrites existing content). data should be a list of strings."""
     try:
+        ensure_directory_exists(filename)
         with open(filename, 'w') as file:
             file.writelines(data)
         return True
@@ -27,6 +37,7 @@ def write_file(filename, data):
 def append_file(filename, line):
     """Append a single line to file."""
     try:
+        ensure_directory_exists(filename)
         with open(filename, 'a') as file:
             if not line.endswith('\n'):
                 line += '\n'
