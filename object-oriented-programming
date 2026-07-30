@@ -41,7 +41,7 @@ Sarah
 
 Mike
 
-Class Student:
+class Student:
       pass
 
 class Student:
@@ -133,3 +133,59 @@ class Student:
       student = Student("John", 20)
 
 Can Constructors Do More?
+
+Understanding Self
+
+class Student:
+   def __init__(self):
+       print(self)
+
+Initializing Attributes:
+
+Instead of adding them later:
+
+student.name = "John"
+
+class Student:
+
+      def __init__(self, name, age):
+          self.name = name
+          self.age = int(age)
+
+student1 = Student("John", 20)
+student2 = Student("Sarah", 21)
+
+print (student2.age)
+
+Create ------
+|
+|
+|
+Employee
+
+Properties:
+Name
+Department
+Salary
+
+Methods:
+
+Objects do not only store data. They also do things. 
+
+e.g:
+
+class Student:
+
+    def __init__(self,name):
+        self.name = name 
+
+    def study(self):
+
+        printel(sf.name, "is studying")
+
+student = Student("John")
+student.study()
+
+Multiple Objects
+
+
