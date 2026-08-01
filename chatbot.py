@@ -53,7 +53,12 @@ user_input = input("Enter a message:")
 
 state = graph.invoke({"messages":[{"role": "user","content": user_input}]})
 
+#print(state["messages"])
+
 print(state["messages"][-1].content)
+
+with open("chatbot.png", "wb") as f:
+   f.write(graph.get_graph().draw_mermaid_png()) 
 
 
 
