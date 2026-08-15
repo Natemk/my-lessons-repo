@@ -81,11 +81,12 @@ class MessagesState(TypedDict):
 
 
 
-def llm_call(state: MessagesState):
+def llm_call(state: MessagesState, model_with_tools):
     """LLM decision whether to call a tool or not
 
     Args:
         state: Messages state containing a "messages" list.
+        model_with_tools: an object with an invoke(list[messages]) method.
     """
 
     system_message = SystemMessage(
@@ -159,9 +160,13 @@ agent_builder.add_edge("tool_node", "llm_call")
 # Compile the agent
 agent = agent_builder.compile()
 
-if __name__ == "__main__":
-    user_input = input("Enter your question: ")
-    messages = [HumanMessage(content=user_input)]
-    messages = agent.invoke({"messages": messages})
-    for m in messages["messages"]:
-        m.pretty_print()
+
+# Show the agent
+display(Image(agent.get_graph(xray=True).draw_mermaid_png()))
+
+## Invoke
+
+messages = [HumanMessage(content="What is 3 + 4?")]
+messages = agent.invoke({"messages": messages})
+for m in messages["messages"]:
+    m.pretty_print()

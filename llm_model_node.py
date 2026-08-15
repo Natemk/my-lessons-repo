@@ -1,5 +1,5 @@
 from langchain.messages import SystemMessage
-from llm_state import MessagesState
+
 
 
 def llm_call(state: MessagesState, model_with_tools):
@@ -16,7 +16,14 @@ def llm_call(state: MessagesState, model_with_tools):
 
     return {
         "messages": [
-            model_with_tools.invoke([system_message] + state["messages"])
+            model_with_tools.invoke(
+                [
+                    system_message := SystemMessage(
+                        content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."
+                    )
+                ]
+                + state["messages"]
+            )
         ],
         "llm_calls": state.get("llm_calls", 0) + 1,
     }

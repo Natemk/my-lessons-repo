@@ -1,0 +1,342 @@
+
+"""
+ANNOTATED VERSION — every element explained, written for someone coming
+from OOP basics (classes, objects, methods) into API/agent-style code.
+
+BIG PICTURE FIRST:
+In your OOP classes, you probably built things like:
+
+    class Car:
+        def __init__(self, speed):
+            self.speed = speed
+        def accelerate(self):
+            self.speed += 10
+
+One object (`Car`) holds its own data (`self.speed`) and has methods that
+change that data. Everything lives INSIDE the object.
+
+This code uses a DIFFERENT (equally valid) style, common in API/pipeline
+code: instead of one object holding data and mutating itself, we have
+PLAIN FUNCTIONS that each take a bundle of data in, and pass a bundle of
+data out. No `self`. No methods. Data moves THROUGH functions, left to
+right, like a factory line. Keep that picture in mind as you read.
+"""
+
+import base64
+# WHY: base64 is a module from Python's own standard library (you already
+# have it — no install needed). It converts binary data (image bytes) into
+# plain text characters. Necessary because the internet transmits this
+# whole request as JSON text, and JSON cannot hold raw binary bytes.
+
+from pathlib import Path
+# WHY: Path is an object-oriented way to work with file paths (this one IS
+# classic OOP — Path is a class, and you call methods/access attributes on
+# a Path object, e.g. path.suffix below). Alternative: plain string
+# slicing with os.path, but Path is the modern, safer choice.
+
+from typing import TypedDict, Optional, List
+# WHY: these are just for TYPE HINTS — labels that tell your editor and
+# other programmers "this variable should be this shape." They are NOT
+# enforced at runtime (Python won't crash if you break them). Think of
+# them as documentation with tooling support, not a real class.
+
+from langchain_core.messages import SystemMessage, HumanMessage
+# WHY: these ARE real classes (OOP again). SystemMessage and HumanMessage
+# are objects whose job is to package your text/image data into the exact
+# JSON shape the LLM API expects. You're not required to use them — see
+# the bottom of this file for the "build the dict yourself" alternative.
+
+from langchain_anthropic import ChatAnthropic
+# WHY: this is the "client" class — an object whose method (.invoke()) is
+# what actually sends an HTTP request to Anthropic's servers and gets a
+# response back. Comparable to, say, a `requests.Session()` object, but
+# purpose-built for chat APIs.
+
+from langgraph.graph import StateGraph, START, END
+# WHY: StateGraph is a class that lets you register functions as "nodes"
+# and connect them with "edges" (arrows). START and END are just fixed
+# markers for "where the pipeline begins/ends" — not functions you call.
+
+
+# ---------------------------------------------------------------------------
+# STEP 1: a plain function (not a method — no `self`, not attached to
+# any object) that does ONE job: turn an image file into base64 text.
+# ---------------------------------------------------------------------------
+def encode_image(image_path: str) -> tuple[str, str]:
+    """
+    Takes: a file path (string), e.g. "photo.jpg"
+    Returns: a tuple of (base64_string, mime_type)
+
+    WHY A TUPLE: this function produces two related pieces of information
+    (the encoded data AND what kind of image it is). Returning a tuple is
+    a common way to hand back more than one value without creating a
+    whole class just to hold two fields.
+    """
+    path = Path(image_path)
+    # WHY: wraps the raw string in a Path OBJECT so we can use its
+    # built-in attributes instead of manually parsing the string.
+
+    ext = path.suffix.lower().lstrip(".")
+    # path.suffix -> an ATTRIBUTE on the Path object, e.g. ".jpg"
+    # .lower()    -> normalize case, so ".JPG" and ".jpg" behave the same
+    # .lstrip(".") -> strip the leading dot, leaving "jpg"
+
+    mime_type = f"image/{'jpeg' if ext == 'jpg' else ext}"
+    # WHY: APIs expect a MIME type like "image/jpeg", not a bare
+    # extension. "jpg" is a special case because the correct MIME word is
+    # "jpeg", not "jpg" — everything else (png, gif, webp) matches its
+    # extension directly, so no lookup table is needed for those.
+
+    with open(path, "rb") as f:
+        # "rb" = read binary. WHY binary and not normal text mode: an
+        # image is not text, it's raw bytes (pixel data compressed by a
+        # codec). Opening it as text would corrupt it.
+        b64_string = base64.b64encode(f.read()).decode("utf-8")
+        # f.read()            -> raw bytes object, e.g. b'\xff\xd8\xff...'
+        # base64.b64encode()  -> converts those bytes into base64 bytes
+        #                        (still a `bytes` object, just restricted
+        #                        to ASCII-safe characters)
+        # .decode("utf-8")    -> converts that `bytes` object into a
+        #                        normal Python `str`, because JSON needs
+        #                        a string, not a bytes object.
+
+    return b64_string, mime_type
+    # WHY return, not print: this function's whole purpose is to hand
+    # data to the NEXT function in the pipeline — it doesn't need to
+    # display anything itself. Compare to a method like Car.accelerate()
+    # which changes self.speed directly; here there's no shared object to
+    # change, so we pass the result along explicitly.
+
+
+# ---------------------------------------------------------------------------
+# STEP 2: AgentState — this is the closest thing here to a class, but
+# it's a TypedDict, not a full class. Think of it as: "a dictionary, but
+# I'm telling my editor what keys and types to expect."
+# ---------------------------------------------------------------------------
+class AgentState(TypedDict):
+    # WHY a TypedDict instead of a real class with __init__:
+    # A real class (like your `Car` example) usually has BEHAVIOR —
+    # methods that do things. AgentState has NO behavior, it's purely a
+    # labeled bag of data being passed between functions. When something
+    # is just data with no behavior, a TypedDict (or dataclass) is
+    # simpler than writing a full class with __init__ boilerplate.
+    image_path: str
+    user_text: Optional[str]
+    # Optional[str] means: "this is a str, OR it could be None."
+    # Necessary because sometimes the user attaches no text — see the
+    # fallback rule in build_message() below.
+    system_prompt: str
+    messages: List
+    result: str
+    # NOTE: at runtime, an AgentState is really just a normal Python
+    # dict — {"image_path": "...", "user_text": "...", ...}. The class
+    # syntax above only exists for the type-checker; it disappears when
+    # the program actually runs.
+
+
+DEFAULT_SYSTEM_PROMPT = (
+    "You are a meticulous visual analyst. Look at the provided image carefully "
+    "and describe what is relevant, factual, and useful about it."
+)
+# WHY a module-level constant: this value doesn't change and isn't tied
+# to any one function call, so it's defined once, up here, instead of
+# being recreated inside a function every time.
+
+
+# ---------------------------------------------------------------------------
+# STEP 3: build_message — a plain function that takes the WHOLE state
+# dict in, and returns a (modified) state dict out. This is the core
+# pattern of the whole file: functions transform state, then hand it to
+# the next function.
+# ---------------------------------------------------------------------------
+def build_message(state: AgentState) -> AgentState:
+    """
+    WHY IT TAKES/RETURNS THE FULL STATE (not just the pieces it needs):
+    LangGraph's contract for a "node" function is: it receives the
+    current state dict, and returns an updated state dict. This lets
+    LangGraph chain functions together generically, without needing to
+    know each function's specific inputs/outputs in advance.
+    (Contrast: if you wrote this as plain functions with no LangGraph,
+    you'd more naturally write build_message(image_path, user_text,
+    system_prompt) and return just the messages list — cleaner, but
+    LangGraph needs the full-state-in/full-state-out shape to do its
+    graph-wiring magic.)
+    """
+
+    b64_data, mime_type = encode_image(state["image_path"])
+    # Calling STEP 1's function. state["image_path"] — dict access using
+    # square brackets, same as any normal Python dict, because at
+    # runtime `state` really is just a dict (see the note above).
+
+    image_block = {
+        "type": "image",
+        "source_type": "base64",
+        "data": b64_data,
+        "mime_type": mime_type,
+    }
+    # WHY a plain dict here, not a class: this dict's SHAPE (its keys)
+    # is dictated entirely by Anthropic's API spec — it's not something
+    # you get to design. LangChain expects you to hand it this exact
+    # dict shape inside a HumanMessage's content list.
+
+    user_text = state.get("user_text")
+    # .get() instead of state["user_text"]: .get() returns None if the
+    # key is missing or its value is None, instead of raising a
+    # KeyError. Safer when a key might legitimately be absent.
+
+    if user_text:
+        # THIS IS YOUR FALLBACK RULE.
+        # Truthy check: a non-empty string is "truthy", None and "" are
+        # "falsy". So this branch runs only when real text was supplied.
+        prompt_text = user_text
+    else:
+        # No text was attached to the image -> we still need SOME text
+        # block to send (the API expects text + image together), so we
+        # supply a neutral trigger phrase. The actual STEERING of the
+        # response now comes entirely from the system prompt below, not
+        # from this placeholder.
+        prompt_text = "Analyze this image."
+
+    human_message = HumanMessage(content=[
+        {"type": "text", "text": prompt_text},
+        image_block,
+    ])
+    # HumanMessage is a CLASS (from langchain_core). We're creating an
+    # INSTANCE of it — an object — by calling HumanMessage(...). Its
+    # `content` argument is a LIST containing two dicts: one for the
+    # text part, one for the image part. This list-of-blocks shape is
+    # how you send "mixed" content (text + image) in one message.
+
+    state["messages"] = [
+        SystemMessage(content=state.get("system_prompt") or DEFAULT_SYSTEM_PROMPT),
+        human_message,
+    ]
+    # `state.get("system_prompt") or DEFAULT_SYSTEM_PROMPT`:
+    # if a system_prompt was provided AND is non-empty, use it;
+    # otherwise fall back to the constant defined earlier. This is the
+    # SAME truthy-or pattern as the user_text fallback above, just
+    # applied to a different field.
+
+    return state
+    # Hand the whole (now-updated) state dict to whichever node comes
+    # next in the graph.
+
+
+# ---------------------------------------------------------------------------
+# STEP 4: call_model — the function that actually talks to the network.
+# ---------------------------------------------------------------------------
+model = ChatAnthropic(model="claude-sonnet-4-6")
+# WHY this line sits OUTSIDE any function, at module level: creating a
+# ChatAnthropic object is a bit of setup work (reading your API key from
+# the environment, etc.). We want to do that ONCE when the program
+# starts, not every single time call_model() runs. `model` is an OBJECT
+# — an instance of the ChatAnthropic class — and we'll call its
+# .invoke() METHOD below. This IS classic OOP: object + method call.
+
+def call_model(state: AgentState) -> AgentState:
+    response = model.invoke(state["messages"])
+    # .invoke() is a METHOD on the `model` object. We pass it the list
+    # of message objects built in STEP 3. Internally it serializes those
+    # objects into JSON, sends an HTTPS request to Anthropic's API, waits
+    # for the reply, and wraps that reply in an AIMessage object, which
+    # it returns as `response`.
+
+    state["result"] = response.content
+    # response.content -> an ATTRIBUTE on the AIMessage object holding
+    # the model's actual text answer.
+
+    return state
+
+
+# ---------------------------------------------------------------------------
+# STEP 5: wiring the functions together into a graph.
+# ---------------------------------------------------------------------------
+def build_graph():
+    graph = StateGraph(AgentState)
+    # Creating an INSTANCE of StateGraph, telling it "the data flowing
+    # through you will have the shape of AgentState." This is purely for
+    # type-checking/validation — StateGraph uses AgentState's declared
+    # keys to know what fields exist.
+
+    graph.add_node("build_message", build_message)
+    graph.add_node("call_model", call_model)
+    # .add_node(name, function) -> METHOD calls on the graph object.
+    # Registers each of our plain functions under a string name, so the
+    # graph can refer to them when wiring edges.
+
+    graph.add_edge(START, "build_message")
+    graph.add_edge("build_message", "call_model")
+    graph.add_edge("call_model", END)
+    # .add_edge(from, to) -> draws an arrow: "after X finishes, run Y
+    # next." START and END are fixed sentinel markers, not real nodes.
+    # Visually, what we've built is:
+    #     START -> build_message -> call_model -> END
+
+    return graph.compile()
+    # .compile() -> METHOD that locks in the graph structure and returns
+    # a runnable OBJECT (commonly called `app`). Compiling is what turns
+    # the "blueprint" (nodes + edges) into something you can actually
+    # call with .invoke().
+
+
+app = build_graph()
+# Build the graph ONCE at module load, same reasoning as `model` above —
+# no need to rebuild the wiring on every run.
+
+
+# ---------------------------------------------------------------------------
+# STEP 6: actually running the whole pipeline.
+# ---------------------------------------------------------------------------
+if __name__ == "__main__":
+    # WHY this guard: it means "only run the code below if this FILE was
+    # run directly (python image_agent.py), not if it was imported into
+    # another file." Standard Python practice — you'll have seen this in
+    # your OOP classes too.
+
+    result_with_text = app.invoke({
+        "image_path": "photo.jpg",
+        "user_text": "What breed is this dog, and is it a puppy or an adult?",
+        "system_prompt": DEFAULT_SYSTEM_PROMPT,
+    })
+    # app.invoke(some_dict) -> METHOD call on the compiled graph object.
+    # We hand it a plain dict matching AgentState's shape. Internally,
+    # LangGraph runs: build_message(that_dict) -> call_model(the result)
+    # -> returns the final state dict. That final dict is what comes
+    # back as `result_with_text`.
+    print("With user text:\n", result_with_text["result"], "\n")
+
+    result_image_only = app.invoke({
+        "image_path": "photo.jpg",
+        "user_text": None,
+        "system_prompt": DEFAULT_SYSTEM_PROMPT,
+    })
+    # Same call, but user_text is None this time -> triggers the ELSE
+    # branch inside build_message() -> the system prompt alone steers
+    # the answer. This is your fallback rule being exercised.
+    print("Image only (fallback to system prompt):\n", result_image_only["result"])
+
+
+# ---------------------------------------------------------------------------
+# ALTERNATIVE STYLE — for comparison, here's what build_message would
+# look like WITHOUT LangChain's message classes, using only plain dicts.
+# Shows you the classes aren't magic — they just build these dicts for
+# you.
+# ---------------------------------------------------------------------------
+def build_message_raw_dicts(image_path, user_text, system_prompt):
+    b64_data, mime_type = encode_image(image_path)
+    prompt_text = user_text or "Analyze this image."
+    return [
+        {"role": "system", "content": system_prompt or DEFAULT_SYSTEM_PROMPT},
+        {"role": "user", "content": [
+            {"type": "text", "text": prompt_text},
+            {"type": "image", "source": {
+                "type": "base64", "media_type": mime_type, "data": b64_data
+            }},
+        ]},
+    ]
+    # Notice: same information, no HumanMessage/SystemMessage classes at
+    # all — just nested dicts and lists. This is closer to raw OOP-free
+    # "data structures" style. Either approach is valid; LangChain's
+    # classes exist mainly to catch mistakes early and stay consistent
+    # across different LLM providers.
+Content is user-generated and unverified.

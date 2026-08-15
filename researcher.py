@@ -45,7 +45,7 @@ _JUNK_LINK_SUBSTRINGS = (
     "heraldonline.co.zw"
 )
  
- 
+
 @tool
 def web_search(query: str) -> str:
     """Searches the web and returns the top result URL."""
