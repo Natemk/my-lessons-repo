@@ -3,17 +3,22 @@ import re
 from urllib.parse import quote_plus
  
 import requests
+from firecrawl import FirecrawlApp
 from langchain.chat_models import init_chat_model
 from langchain.tools import tool
 from langgraph.graph import add_messages
 from langchain.messages import SystemMessage
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, ToolMessage
 from langgraph.func import entrypoint, task
  
  
 # Require OPENAI_API_KEY from environment (app.py should load .env first)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
  
+# Firecrawl configuration (for scraping pages more robustly than raw requests)
+FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")
+firecrawl_app = None
+
 # Model is initialized lazily so web search and scrape tools can be imported and used without an API key.
 model = None
 model_with_tools = None
@@ -92,31 +97,42 @@ def web_search(query: str) -> str:
         return f"ERROR: {type(e).__name__}: {e}"
  
  
+def _get_firecrawl_app() -> FirecrawlApp:
+    """Lazily initialize and return the global Firecrawl client."""
+    global firecrawl_app, FIRECRAWL_API_KEY
+    if firecrawl_app is None:
+        FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")
+        if not FIRECRAWL_API_KEY:
+            raise RuntimeError(
+                "FIRECRAWL_API_KEY not found in environment. Set it in .env before running."
+            )
+        firecrawl_app = FirecrawlApp(api_key=FIRECRAWL_API_KEY)
+    return firecrawl_app
+
+
 @tool
 def scrape_page(url: str) -> str:
-    """Scrapes text content from a web page."""
+    """Scrapes text content from a web page using Firecrawl."""
     try:
-        resp = requests.get(
-            url,
-            headers={
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/124.0.0.0 Safari/537.36"
-                ),
-                "Accept-Language": "en-US,en;q=0.9",
-            },
-            timeout=15,
-        )
-        if resp.status_code != 200:
-            return f"Page fetch failed with status {resp.status_code}"
- 
-        text = clean_html(resp.text)
+        app = _get_firecrawl_app()
+        # Ask Firecrawl for markdown/text content of the page.
+        result = app.crawl_url(url, params={"formats": ["markdown"], "maxDepth": 0})
+
+        # Firecrawl typically returns a dict; try to extract markdown if present,
+        # otherwise fall back to a string representation.
+        text = ""
+        if isinstance(result, dict):
+            if "markdown" in result:
+                text = result["markdown"] or ""
+            elif "data" in result and isinstance(result["data"], list) and result["data"]:
+                first = result["data"][0]
+                if isinstance(first, dict) and "markdown" in first:
+                    text = first["markdown"] or ""
         if not text:
-            return f"Page loaded from {url} but no text could be extracted."
- 
+            text = str(result)
+
         snippet = text[:3000]
-        return f"Scraped {url}: {len(snippet)} chars extracted.\n\n{snippet}"
+        return f"Scraped via Firecrawl from {url}: {len(snippet)} chars extracted.\n\n{snippet}"
     except Exception as e:
         return f"ERROR: {type(e).__name__}: {e}"
  
@@ -166,7 +182,8 @@ def llm_call(messages: list[BaseMessage]):
             "2) If `web_search` returns a URL, call `scrape_page` with that URL to extract page text.\n"
             "3) Use the scraped text to produce a concise factual summary and cite the source URL.\n"
             "Do not invent facts. Prefer authoritative sources (news, government, academic, major publications). "
-            "If no useful web results exist, say 'no reliable web results found'."
+            "If search or scraping fails (e.g. status errors, captchas, no text extracted), include those error "
+            "messages in your answer instead of only saying 'no reliable web results found'."
         )
     )
  
@@ -175,8 +192,21 @@ def llm_call(messages: list[BaseMessage]):
  
 @task
 def call_tool(tool_call):
+    """Invoke a tool and wrap the result in a ToolMessage.
+
+    `tool_call` is expected to be a dict with at least:
+        {"id": <call_id>, "name": <tool_name>, "args": { ... }}
+
+    OpenAI's tools API requires that after an assistant message with
+    `tool_calls`, there must be one `tool`-role message per `tool_call_id`.
+    Returning a ToolMessage here satisfies that requirement.
+    """
     t = tools_by_name[tool_call["name"]]
-    return t.invoke(tool_call)
+    observation = t.invoke(tool_call.get("args", {}))
+    return ToolMessage(
+        content=str(observation),
+        tool_call_id=tool_call["id"],
+    )
  
  
 @entrypoint()
@@ -200,4 +230,3 @@ def research_agent(messages: list[BaseMessage]):
  
 # Backwards-compatible export: allow `from researcher import researcher`
 researcher = research_agent
- 

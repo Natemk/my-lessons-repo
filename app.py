@@ -1,23 +1,28 @@
+
 import os
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
- 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise SystemExit("OPENAI_API_KEY not found in .env; please add it and rerun.")
- 
+from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
 from langchain.messages import HumanMessage, SystemMessage
  
+# Load environment variables from a local .env file if present
+load_dotenv()
+
 # Import the actual agent objects (entrypoints), not the modules.
 # `import researcher` / `import writer` would import the *module*, which has
 # no .invoke() of its own -- that raised AttributeError as soon as a route
 # other than "unknown" fired.
 from researcher import research_agent
 from writer import writer as writer_agent
+
+
+print(os.getenv("OPENAI_API_KEY"))
+
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise SystemExit(
+        "OPENAI_API_KEY not found. Create a .env file with OPENAI_API_KEY=your_key "
+        "or set it in your shell environment, then rerun."
+    )
  
  
 VALID_ROUTES = {"research", "write", "research_and_write"}
@@ -79,21 +84,55 @@ def route_request(request: str) -> str:
 # Helper
  
 def get_final_response(result) -> str:
-    """Get the final AI message from an agent result."""
+    """Get the final AI message from an agent result.
+
+    Handles several possible result shapes from LangGraph/LangChain:
+    - list[BaseMessage]
+    - single BaseMessage
+    - dicts containing messages
+    Falls back to str(result) so we never silently print nothing.
+    """
     if not result:
         return ""
-    final_message = result[-1]
-    content = final_message.content
-    # Some models return content as a list of blocks instead of a plain
-    # string; handle both so we don't print a raw Python list to the user.
-    if isinstance(content, list):
-        parts = [
-            block.get("text", "")
-            for block in content
-            if isinstance(block, dict) and block.get("type") == "text"
-        ]
-        return "\n".join(parts) if parts else str(content)
-    return content
+
+    # If it's already a single message-like object
+    if hasattr(result, "content") and not isinstance(result, list):
+        content = result.content
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            parts = [
+                block.get("text", "")
+                for block in content
+                if isinstance(block, dict) and block.get("type") == "text"
+            ]
+            return "\n".join(parts) if parts else str(content)
+        return str(content)
+
+    # If it's a list, assume it's a list of messages and take the last
+    if isinstance(result, list) and result:
+        final_message = result[-1]
+        content = getattr(final_message, "content", final_message)
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            parts = [
+                block.get("text", "")
+                for block in content
+                if isinstance(block, dict) and block.get("type") == "text"
+            ]
+            return "\n".join(parts) if parts else str(content)
+        return str(content)
+
+    # If it's a dict, try common keys or just stringify
+    if isinstance(result, dict):
+        for key in ("messages", "output", "outputs", "result", "text"):
+            if key in result and result[key]:
+                return get_final_response(result[key])
+        return str(result)
+
+    # Fallback: never return an empty string silently
+    return str(result)
  
  
 # Research only
