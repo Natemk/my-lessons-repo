@@ -83,17 +83,22 @@ def build_graph():
 
 
 app = build_graph()
-
 if __name__ == "__main__":
-    
     image_path = input("Drag an image file here and press Enter: ").strip().strip('"').strip('"')
-    user_text = input("Ask something about the image (or press Enter to skip): ").strip() or None
-    #  image + explicit user text -> text drives the answer
-    result = app.invoke({
-        "image_path": image_path,
-        "user_text": user_text,
-        "system_prompt": DEFAULT_SYSTEM_PROMPT,
-    })
-    print(result["result"])
+    
+    while True:
+        user_text = input("Ask something about the image (or press Enter to skip): ").strip() or None
+        
+        if user_text.lower() in {"quit",    "exit", "q"," "}:
+            print("Bye")
+            break
+        
+    #  image + (explicit user text or None) -> text drives the answer
+        result = app.invoke({
+            "image_path": image_path,
+            "user_text": user_text,
+            "system_prompt": DEFAULT_SYSTEM_PROMPT,
+        })
+        print(result["result"])
 
-   
+# how to activate your virtual envi source .venv/Scripts/activate

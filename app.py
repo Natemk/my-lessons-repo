@@ -26,7 +26,8 @@ VALID_ROUTES = {"research", "write", "research_and_write"}
 # the same model doing the actual research/writing work. Lazily built so
 # importing app.py doesn't require a key before load_dotenv() has run.
 _router_model = None
- 
+
+#When u route it allows one to access a certain endpoint from a module
  
 def _get_router_model():
     global _router_model

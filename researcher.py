@@ -176,7 +176,7 @@ def llm_call(messages: list[BaseMessage]):
 @task
 def call_tool(tool_call):
     t = tools_by_name[tool_call["name"]]
-    return t.invoke(tool_call)
+    return t.invoke(tool_call["args"])
  
  
 @entrypoint()
