@@ -1,0 +1,18 @@
+tool=web_search args={'query': '2026 FIFA World Cup winner'}
+result: https://worldrowing.com/
+
+tool=scrape_page args={'url': 'https://worldrowing.com/'}
+result: ERROR: TypeError: FirecrawlClient.scrape() got an unexpected keyword argument 'params'
+
+tool=web_search args={'query': '2026 FIFA World Cup results'}
+result: https://sports.yahoo.com/soccer/article/2026-world-cup-results-standings-and-schedule-live-scores-group-stage-updates-and-how-to-watch-050724193.html
+
+tool=scrape_page args={'url': 'https://sports.yahoo.com/soccer/article/2026-world-cup-results-standings-and-schedule-live-scores-group-stage-updates-and-how-to-watch-050724193.html'}
+result: ERROR: TypeError: FirecrawlClient.scrape() got an unexpected keyword argument 'params'
+
+tool=web_search args={'query': '2026 FIFA World Cup champion'}
+result: https://worldrowing.com/
+
+tool=scrape_page args={'url': 'https://worldrowing.com/'}
+result: ERROR: TypeError: FirecrawlClient.scrape() got an unexpected keyword argument 'params'
+

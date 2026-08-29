@@ -1,131 +1,144 @@
 import os
 import re
+from datetime import date
 from urllib.parse import quote_plus
- 
+
 import requests
 from langchain.chat_models import init_chat_model
 from langchain.tools import tool
 from langgraph.graph import add_messages
 from langchain.messages import SystemMessage
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, ToolMessage, AIMessage
 from langgraph.func import entrypoint, task
- 
- 
+
+try:
+    from firecrawl import FirecrawlApp
+except ImportError:
+    from firecrawl import Firecrawl as FirecrawlApp
+
+
 # Require OPENAI_API_KEY from environment (app.py should load .env first)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
- 
-# Model is initialized lazily so web search and scrape tools can be imported and used without an API key.
+
+# Firecrawl configuration (for search + scraping)
+FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")
+firecrawl_app = None
+
+# Model is initialized lazily so tools can be imported/used without an API key.
 model = None
 model_with_tools = None
- 
-# Safety cap on agent tool-call loops so a confused model can't loop forever
-# (burning API cost / hanging the CLI).
+
+# Safety cap on agent tool-call loops so a confused model can't loop forever.
 MAX_TURNS = 6
- 
- 
+
+# Keywords that signal a query is about something current/recent, so we can
+# tighten the search freshness window instead of always using one fixed value.
+_RECENCY_KEYWORDS = (
+    "death", "died", "dead", "dies", "passed away",
+    "latest", "recent", "current", "today", "now",
+    "breaking", "update", "news",
+)
+
+DEBUG = os.environ.get("RESEARCHER_DEBUG") == "1"
 # ---------------------------------------------------------------------------
 # Tools
 # ---------------------------------------------------------------------------
- 
+
 def clean_html(html: str) -> str:
     html = re.sub(r"(?si)<(script|style|noscript)[^>]*>.*?</\1>", " ", html)
     html = re.sub(r"<[^>]+>", " ", html)
     return re.sub(r"\s+", " ", html).strip()
- 
- 
-# Links that show up in DuckDuckGo's HTML result page but are never the
-# actual top organic result. The old code's "first http(s) link that isn't
-# duckduckgo.com" logic frequently grabbed one of these instead of a real
-# result.
+
+
 _JUNK_LINK_SUBSTRINGS = (
     "duckduckgo.com",
-    "duckduckgo.com/y.js",  # ad redirect
     "google.com/search",
     "bing.com",
-    "heraldonline.co.zw"
 )
- 
+
+
+def _get_firecrawl_app():
+    """Lazily initialize and return the global Firecrawl client."""
+    global firecrawl_app, FIRECRAWL_API_KEY
+    if firecrawl_app is None:
+        FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")
+        if not FIRECRAWL_API_KEY:
+            raise RuntimeError(
+                "FIRECRAWL_API_KEY not found in environment. Set it in .env before running."
+            )
+        firecrawl_app = FirecrawlApp(api_key=FIRECRAWL_API_KEY)
+    return firecrawl_app
+
+
+def _pick_tbs(query: str) -> str:
+    """Pick a freshness window based on the query itself, instead of a fixed one."""
+    q = query.lower()
+    if any(kw in q for kw in _RECENCY_KEYWORDS):
+        return "qdr:w"  # past week — tight window for time-sensitive queries
+    return "qdr:y"  # past year — broad enough not to exclude normal queries
+
 
 @tool
 def web_search(query: str) -> str:
-    """Searches the web and returns the top result URL."""
+    """Searches the web and returns the top result URL, prioritizing recent content."""
     try:
-        url = f"https://duckduckgo.com/html/?q={quote_plus(query)}"
-        resp = requests.get(
-            url,
-            headers={
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/124.0.0.0 Safari/537.36"
-                ),
-                "Accept-Language": "en-US,en;q=0.9",
-                "Referer": "https://duckduckgo.com/",
-            },
-            timeout=15,
+        app = _get_firecrawl_app()
+        result = app.search(
+            query,
+            limit=5,
+            tbs=_pick_tbs(query),
         )
-        if resp.status_code != 200:
-            return f"Search failed with status {resp.status_code}"
- 
-        # DuckDuckGo's HTML result page marks organic result links with the
-        # class "result__a". Anchor on that instead of "first http link we
-        # see", which was catching ads/nav links before the real result.
-        result_links = re.findall(
-            r'<a[^>]+class="result__a"[^>]+href=["\'](https?://[^"\']+)["\']',
-            resp.text,
-            flags=re.I,
-        )
-        for link in result_links:
-            if not any(junk in link.lower() for junk in _JUNK_LINK_SUBSTRINGS):
+
+        items = []
+        if hasattr(result, "web") and result.web:
+            items = result.web
+        elif isinstance(result, dict) and result.get("web"):
+            items = result["web"]
+        elif isinstance(result, list):
+            items = result
+
+        for item in items:
+            link = item.get("url") if isinstance(item, dict) else getattr(item, "url", None)
+            if link and not any(junk in link.lower() for junk in _JUNK_LINK_SUBSTRINGS):
                 return link
- 
-        # Fallback: DDG sometimes wraps results in a redirect link
-        # (/l/?uddg=<encoded real url>) instead of a direct href.
-        redirect_match = re.search(
-            r'href=["\'](/l/\?uddg=[^"\']+)["\']', resp.text, flags=re.I
-        )
-        if redirect_match:
-            return f"https://duckduckgo.com{redirect_match.group(1)}"
- 
+
         return "No search results found."
     except Exception as e:
         return f"ERROR: {type(e).__name__}: {e}"
- 
- 
+
+
 @tool
 def scrape_page(url: str) -> str:
-    """Scrapes text content from a web page."""
+    """Scrapes text content from a web page using Firecrawl."""
     try:
-        resp = requests.get(
-            url,
-            headers={
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/124.0.0.0 Safari/537.36"
-                ),
-                "Accept-Language": "en-US,en;q=0.9",
-            },
-            timeout=15,
-        )
-        if resp.status_code != 200:
-            return f"Page fetch failed with status {resp.status_code}"
- 
-        text = clean_html(resp.text)
+        app = _get_firecrawl_app()
+        result = app.scrape_url(url, params={"formats": ["markdown"]})
+
+        text = ""
+        if isinstance(result, dict):
+            text = result.get("markdown", "") or ""
+            if not text and isinstance(result.get("data"), dict):
+                text = result["data"].get("markdown", "") or ""
+        else:
+            text = getattr(result, "markdown", "") or ""
+            if not text:
+                data_attr = getattr(result, "data", None)
+                if data_attr is not None:
+                    text = getattr(data_attr, "markdown", "") or ""
+
         if not text:
-            return f"Page loaded from {url} but no text could be extracted."
- 
+            return f"Firecrawl returned no markdown content for {url}. Raw response: {str(result)[:500]}"
+
         snippet = text[:3000]
-        return f"Scraped {url}: {len(snippet)} chars extracted.\n\n{snippet}"
+        return f"Scraped via Firecrawl from {url}: {len(snippet)} chars extracted.\n\n{snippet}"
     except Exception as e:
         return f"ERROR: {type(e).__name__}: {e}"
- 
- 
+
+
 tools = [web_search, scrape_page]
- 
 tools_by_name = {t.name: t for t in tools}
- 
- 
+
+
 def get_model_with_tools():
     global model, model_with_tools, OPENAI_API_KEY
     if model_with_tools is None:
@@ -134,10 +147,6 @@ def get_model_with_tools():
             raise RuntimeError(
                 "OPENAI_API_KEY not found in environment. Set it in .env before running."
             )
- 
-        # gpt-3.5-turbo is deprecated and noticeably weaker at multi-step
-        # tool orchestration. gpt-4o-mini is a comparably cheap but far more
-        # reliable choice for a research/tool-calling loop.
         model = init_chat_model(
             "gpt-4o-mini",
             temperature=0.3,
@@ -145,59 +154,95 @@ def get_model_with_tools():
         )
         model_with_tools = model.bind_tools(tools)
     return model_with_tools
- 
- 
-# ---------------------------------------------------------------------------
-# Agent graph
-# ---------------------------------------------------------------------------
- 
-@task
-def llm_call(messages: list[BaseMessage]):
-    """LLM decision whether to call a tool or not.
- 
-    Args:
-        messages: List of messages in the conversation.
-    """
-    system_message = SystemMessage(
+
+
+def _build_system_message() -> SystemMessage:
+    return SystemMessage(
         content=(
+            f"Today's date is {date.today().isoformat()}. When a query concerns whether "
+            "something is current, recent, or still true, treat this date as ground truth "
+            "and prioritize sources published close to it.\n\n"
             "You are a research agent. Your job is to find accurate, up-to-date information. "
             "When a query requires external information, follow this workflow:\n"
             "1) Call the `web_search` tool with a short search query.\n"
             "2) If `web_search` returns a URL, call `scrape_page` with that URL to extract page text.\n"
             "3) Use the scraped text to produce a concise factual summary and cite the source URL.\n"
-            "Do not invent facts. Prefer authoritative sources (news, government, academic, major publications). "
-            "If no useful web results exist, say 'no reliable web results found'."
+            "Do not invent facts. Prefer authoritative sources (news, government, academic, major publications).\n"
+            "If search or scraping fails (e.g. status errors, captchas, no text extracted), include those error "
+            "messages in your answer instead of only saying 'no reliable web results found'.\n"
+            "If web_search and scrape_page run but return no usable information, say plainly that you could not "
+            "verify the answer with a live search — do not answer from your own prior/training knowledge on the topic."
         )
     )
- 
-    return get_model_with_tools().invoke([system_message, *messages])
- 
- 
+
+
+# ---------------------------------------------------------------------------
+# Agent graph
+# ---------------------------------------------------------------------------
+
+@task
+def llm_call(messages: list[BaseMessage]):
+    """LLM decision whether to call a tool or not."""
+    return get_model_with_tools().invoke([_build_system_message(), *messages])
+
+
 @task
 def call_tool(tool_call):
+    """Invoke a tool and wrap the result in a ToolMessage."""
     t = tools_by_name[tool_call["name"]]
-    return t.invoke(tool_call["args"])
- 
- 
+    observation = t.invoke(tool_call.get("args", {}))
+    # Silently log tool activity to a file for troubleshooting.
+    # Nothing is ever printed to the terminal — your screen stays clean.
+    try:
+        with open("debug.log", "a", encoding="utf-8") as f:
+            f.write(f"tool={tool_call['name']} args={tool_call.get('args', {})}\n")
+            f.write(f"result: {str(observation)[:500]}\n\n")
+    except Exception:
+        pass  # never let logging itself break the app
+    return ToolMessage(
+        content=str(observation),
+        tool_call_id=tool_call["id"],
+    )
+
 @entrypoint()
 def research_agent(messages: list[BaseMessage]):
     model_response = llm_call(messages).result()
- 
+    sources: list[str] = []
+
     turns = 0
     while model_response.tool_calls and turns < MAX_TURNS:
         tool_result_futures = [
             call_tool(tool_call) for tool_call in model_response.tool_calls
         ]
         tool_results = [f.result() for f in tool_result_futures]
- 
+
+        for tc, tr in zip(model_response.tool_calls, tool_results):
+            if tc["name"] == "scrape_page" and tr.content.startswith("Scraped via Firecrawl"):
+                url = tc.get("args", {}).get("url")
+                if url and url not in sources:
+                    sources.append(url)
+
         messages = add_messages(messages, [model_response, *tool_results])
         model_response = llm_call(messages).result()
         turns += 1
- 
+
+    if model_response.tool_calls:
+        forced = SystemMessage(
+            content=(
+                "You have used all available search attempts. Based on whatever information "
+                "you found (or state plainly that you found none), give the user a direct final "
+                "answer now. Do not call any more tools."
+            )
+        )
+        model_response = get_model_with_tools().invoke([*messages, forced])
+
+    if sources:
+        source_lines = "\n".join(f"- {s}" for s in sources)
+        final_text = f"{model_response.content}\n\nSources:\n{source_lines}"
+        model_response = AIMessage(content=final_text)
+
     messages = add_messages(messages, [model_response])
     return messages
- 
- 
-# Backwards-compatible export: allow `from researcher import researcher`
+
+# Backwards-compatible export
 researcher = research_agent
- 
