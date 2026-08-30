@@ -34,9 +34,8 @@ MAX_TURNS = 6
 # Keywords that signal a query is about something current/recent, so we can
 # tighten the search freshness window instead of always using one fixed value.
 _RECENCY_KEYWORDS = (
-    "death", "died", "dead", "dies", "passed away",
     "latest", "recent", "current", "today", "now",
-    "breaking", "update", "news",
+    "breaking", "update", "news"
 )
 
 DEBUG = os.environ.get("RESEARCHER_DEBUG") == "1"
@@ -54,7 +53,31 @@ _JUNK_LINK_SUBSTRINGS = (
     "duckduckgo.com",
     "google.com/search",
     "bing.com",
+    "facebook.com",
+    "linkedin.com",
+    "instagram.com",
+    "twitter.com",
+    "x.com",
 )
+
+# Phrases that indicate Firecrawl "succeeded" but actually just captured a
+# site's own error/placeholder page rather than real content -- these look
+# like a success (no exception raised) but the text is worthless.
+
+_JUNK_CONTENT_MARKERS = (
+    "oops, something went wrong",
+    "page not found",
+    "404 error",
+    "access denied",
+    "please enable javascript",
+    "just a moment...",  # Cloudflare challenge page
+    "checking your browser",
+)
+
+
+def _looks_like_junk_page(text: str) -> bool:
+    lowered = text.lower()
+    return any(marker in lowered for marker in _JUNK_CONTENT_MARKERS)
 
 
 def _get_firecrawl_app():
@@ -106,28 +129,24 @@ def web_search(query: str) -> str:
     except Exception as e:
         return f"ERROR: {type(e).__name__}: {e}"
 
-
 @tool
 def scrape_page(url: str) -> str:
     """Scrapes text content from a web page using Firecrawl."""
     try:
         app = _get_firecrawl_app()
-        result = app.scrape_url(url, params={"formats": ["markdown"]})
+        # Confirmed by Firecrawl's own docs: .scrape(url, formats=[...]) —
+        # no params= dict, result is an object with a .markdown attribute.
+        result = app.scrape(url, formats=["markdown"])
 
-        text = ""
-        if isinstance(result, dict):
-            text = result.get("markdown", "") or ""
-            if not text and isinstance(result.get("data"), dict):
-                text = result["data"].get("markdown", "") or ""
-        else:
-            text = getattr(result, "markdown", "") or ""
-            if not text:
-                data_attr = getattr(result, "data", None)
-                if data_attr is not None:
-                    text = getattr(data_attr, "markdown", "") or ""
+        text = getattr(result, "markdown", None)
+        if text is None and isinstance(result, dict):
+            text = result.get("markdown")
 
         if not text:
             return f"Firecrawl returned no markdown content for {url}. Raw response: {str(result)[:500]}"
+
+        if _looks_like_junk_page(text[:500]):
+            return f"ERROR: scraped content from {url} appears to be an error/placeholder page, not real content."
 
         snippet = text[:3000]
         return f"Scraped via Firecrawl from {url}: {len(snippet)} chars extracted.\n\n{snippet}"

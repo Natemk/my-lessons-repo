@@ -16,3 +16,170 @@ result: https://worldrowing.com/
 tool=scrape_page args={'url': 'https://worldrowing.com/'}
 result: ERROR: TypeError: FirecrawlClient.scrape() got an unexpected keyword argument 'params'
 
+tool=web_search args={'query': '2026 FIFA World Cup winner'}
+result: https://impact.ed.ac.uk/opinion/who-were-the-2026-world-cup-winners-and-losers/
+
+tool=scrape_page args={'url': 'https://impact.ed.ac.uk/opinion/who-were-the-2026-world-cup-winners-and-losers/'}
+result: Scraped via Firecrawl from https://impact.ed.ac.uk/opinion/who-were-the-2026-world-cup-winners-and-losers/: 3000 chars extracted.
+
+Cookies on the Edinburgh Impact website
+
+### Cookies on the Edinburgh Impact website
+
+We use cookies to make this website work.
+
+We'd also like to set additional cookies to analyse how our sites are performing and to improve the relevance of our ads.
+
+FunctionalFunctional
+Always active
+
+The technical storage or access is strictly necessary for the legitimate purpose 
+
+tool=web_search args={'query': 'Optimus Prime voice actor death news 2026'}
+result: https://www.hollywoodreporter.com/movies/movie-news/peter-cullen-optimus-prime-transformers-eeyore-1236683075/
+
+tool=scrape_page args={'url': 'https://www.hollywoodreporter.com/movies/movie-news/peter-cullen-optimus-prime-transformers-eeyore-1236683075/'}
+result: Scraped via Firecrawl from https://www.hollywoodreporter.com/movies/movie-news/peter-cullen-optimus-prime-transformers-eeyore-1236683075/: 3000 chars extracted.
+
+[Skip to main content](https://www.hollywoodreporter.com/movies/movie-news/peter-cullen-optimus-prime-transformers-eeyore-1236683075/#pagetop)
+
+By
+[Etan Vlessing](https://www.hollywoodreporter.com/author/etan-vlessing/)
+Plus Icon
+
+### [Etan Vlessing](https://www.hollywoodreporter.com/author/etan-vlessing/)
+
+Canada Bureau Chief
+
+[View Al
+
+tool=web_search args={'query': 'Africa University official website'}
+result: https://support.africau.org/
+
+tool=scrape_page args={'url': 'https://support.africau.org/'}
+result: Scraped via Firecrawl from https://support.africau.org/: 3000 chars extracted.
+
+September 28, 2026 \| Orangeburg Country Club, Orangeburg, South Carolina
+
+2026 Africa University Wespath-Sponsored Bishop Leonard Fairley Golf Invitational
+
+[REGISTER](https://golf.africau.org/register)[SPONSOR](https://golf.africau.org/store)[LEARN MORE](https://support.africau.org/wp-content/uploads/2026/06/FINAL_AU-BLFGI-Sponsorship-Invitation-2026_6.12.26.pdf)Almost 700 students from 21 African countries graduat
+
+tool=web_search args={'query': 'Nathaniel Muzengeza'}
+result: https://zw.linkedin.com/in/nathaniel-muzengeza-406017349
+
+tool=scrape_page args={'url': 'https://zw.linkedin.com/in/nathaniel-muzengeza-406017349'}
+result: ERROR: WebsiteNotSupportedError: Website Not Supported: Failed to scrape. We apologize for the inconvenience but we do not support this site. If you are part of an enterprise and want to have a further conversation about this, please fill out our intake form here: https://fk4bvu0n5qp.typeform.com/to/Ej6oydlg - No additional error details provided.
+
+tool=web_search args={'query': 'Nathaniel Muzengeza biography'}
+result: https://www.facebook.com/61571163213556/posts/keith-muzengeza-scored-his-first-goal-for-avelion-fc-in-their-2-1-victory-over-c/122164150670705440/
+
+tool=scrape_page args={'url': 'https://www.facebook.com/61571163213556/posts/keith-muzengeza-scored-his-first-goal-for-avelion-fc-in-their-2-1-victory-over-c/122164150670705440/'}
+result: ERROR: WebsiteNotSupportedError: Website Not Supported: Failed to scrape. We apologize for the inconvenience but we do not support this site. If you are part of an enterprise and want to have a further conversation about this, please fill out our intake form here: https://fk4bvu0n5qp.typeform.com/to/Ej6oydlg - No additional error details provided.
+
+tool=web_search args={'query': 'Nathaniel Muzengeza news'}
+result: https://www.facebook.com/61571163213556/posts/keith-muzengeza-scored-his-first-goal-for-avelion-fc-in-their-2-1-victory-over-c/122164150670705440/
+
+tool=web_search args={'query': 'Elon Musk current net worth August 2026'}
+result: https://www.facebook.com/TheFactPoint/posts/america-dominates-the-very-top-of-the-global-wealth-rankings-with-9-of-the-world/1597580699046059/
+
+tool=scrape_page args={'url': 'https://www.facebook.com/TheFactPoint/posts/america-dominates-the-very-top-of-the-global-wealth-rankings-with-9-of-the-world/1597580699046059/'}
+result: ERROR: WebsiteNotSupportedError: Website Not Supported: Failed to scrape. We apologize for the inconvenience but we do not support this site. If you are part of an enterprise and want to have a further conversation about this, please fill out our intake form here: https://fk4bvu0n5qp.typeform.com/to/Ej6oydlg - No additional error details provided.
+
+tool=web_search args={'query': 'Elon Musk net worth August 2026'}
+result: https://www.facebook.com/ForbesMENA.English/posts/elon-musk-is-now-worth-more-than-14-trillion-as-of-june-16-2026-after-spacex-sha/1577152401087314/
+
+tool=scrape_page args={'url': 'https://www.facebook.com/ForbesMENA.English/posts/elon-musk-is-now-worth-more-than-14-trillion-as-of-june-16-2026-after-spacex-sha/1577152401087314/'}
+result: ERROR: WebsiteNotSupportedError: Website Not Supported: Failed to scrape. We apologize for the inconvenience but we do not support this site. If you are part of an enterprise and want to have a further conversation about this, please fill out our intake form here: https://fk4bvu0n5qp.typeform.com/to/Ej6oydlg - No additional error details provided.
+
+tool=web_search args={'query': 'Elon Musk wealth August 2026 news'}
+result: https://finance.yahoo.com/markets/stocks/articles/elon-musk-touts-3-5-233119602.html
+
+tool=scrape_page args={'url': 'https://finance.yahoo.com/markets/stocks/articles/elon-musk-touts-3-5-233119602.html'}
+result: Scraped via Firecrawl from https://finance.yahoo.com/markets/stocks/articles/elon-musk-touts-3-5-233119602.html: 3000 chars extracted.
+
+Oops, something went wrong
+
+[Skip to navigation](https://finance.yahoo.com/markets/stocks/articles/elon-musk-touts-3-5-233119602.html#navigation-container) [Skip to main content](https://finance.yahoo.com/markets/stocks/articles/elon-musk-touts-3-5-233119602.html#nimbus-app) [Skip to right column](https://finance.yahoo.com/markets/stocks/articles/elon-musk-touts
+
+tool=web_search args={'query': 'Elon Musk net worth August 2026'}
+result: ERROR: NameError: name '_JUNK_LINK_SUBSTRINGS' is not defined
+
+tool=web_search args={'query': 'Elon Musk net worth August 2026'}
+result: ERROR: NameError: name '_JUNK_LINK_SUBSTRINGS' is not defined
+
+tool=web_search args={'query': 'current net worth of Elon Musk August 2026'}
+result: ERROR: NameError: name '_JUNK_LINK_SUBSTRINGS' is not defined
+
+tool=web_search args={'query': 'Elon Musk net worth August 2026'}
+result: ERROR: NameError: name '_JUNK_LINK_SUBSTRINGS' is not defined
+
+tool=web_search args={'query': 'Elon Musk net worth August 2026'}
+result: ERROR: NameError: name '_JUNK_LINK_SUBSTRINGS' is not defined
+
+tool=web_search args={'query': 'Elon Musk net worth August 2026'}
+result: ERROR: NameError: name '_JUNK_LINK_SUBSTRINGS' is not defined
+
+tool=web_search args={'query': 'Elon Musk net worth August 2026'}
+result: ERROR: NameError: name '_JUNK_LINK_SUBSTRINGS' is not defined
+
+tool=web_search args={'query': 'Elon Musk net worth August 2026'}
+result: ERROR: NameError: name '_JUNK_LINK_SUBSTRINGS' is not defined
+
+tool=web_search args={'query': 'Elon Musk current net worth 2026'}
+result: ERROR: NameError: name '_JUNK_LINK_SUBSTRINGS' is not defined
+
+tool=web_search args={'query': 'Elon Musk net worth August 2026'}
+result: ERROR: NameError: name '_JUNK_LINK_SUBSTRINGS' is not defined
+
+tool=web_search args={'query': 'Elon Musk net worth August 2026'}
+result: ERROR: NameError: name '_JUNK_LINK_SUBSTRINGS' is not defined
+
+tool=web_search args={'query': 'Elon Musk net worth August 2026'}
+result: ERROR: NameError: name '_JUNK_LINK_SUBSTRINGS' is not defined
+
+tool=web_search args={'query': 'Elon Musk net worth August 2026'}
+result: https://www.bbc.com/news/articles/c4gyp523ly8o
+
+tool=scrape_page args={'url': 'https://www.bbc.com/news/articles/c4gyp523ly8o'}
+result: Scraped via Firecrawl from https://www.bbc.com/news/articles/c4gyp523ly8o: 3000 chars extracted.
+
+edigitalsurvey.com
+
+# edigitalsurvey.com is blocked
+
+This page has been blocked by an extension
+
+- Try disabling your extensions.
+
+ERR\_BLOCKED\_BY\_CLIENT
+
+Reload
+
+
+This page has been blocked by an extension
+
+![](<Base64-Image-Removed>)![](<Base64-Image-Removed>)
+
+[Skip to content](https://www.bbc.com/news/articles/c4gyp523ly8o#bbc-main)
+
+Site search
+
+[Home](https://www.bbc.com/)
+
+News
+
+[Sport](htt
+
+tool=web_search args={'query': 'Elon Musk net worth August 2026 update'}
+result: https://www.oddsshopper.com/articles/prediction-markets/elon-musk-net-worth-markets
+
+tool=scrape_page args={'url': 'https://www.oddsshopper.com/articles/prediction-markets/elon-musk-net-worth-markets'}
+result: Scraped via Firecrawl from https://www.oddsshopper.com/articles/prediction-markets/elon-musk-net-worth-markets: 3000 chars extracted.
+
+# Elon Musk Net Worth: Trillionaire Again Before New Year?
+
+Updated August 26, 2026 · 8 min read by [Dave Loughran](https://www.oddsshopper.com/authors/dave-loughran)
+
+[![Elon Musk Net Worth: Trillionaire Again Before New Year?](https://www.oddsshopper.com/_next/image?url=https%3A%2F%2Foddsshopperassets.blob.core.windows.net%2Fos-article%2Felon-musk-net-worth-mar
+

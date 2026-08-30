@@ -199,7 +199,13 @@ if __name__ == "__main__":
             break
  
         response = handle_request(user_input)
- 
+
+        # Defensive: strip stray carriage returns. A bare \r (without a
+        # matching \n) makes Windows terminals overwrite part of the current
+        # line instead of moving to a new one -- which is exactly the
+        # "Sourc" truncation/cursor-jump glitch being seen.
+        response = response.replace("\r\n", "\n").replace("\r", "\n")
+
         print("\nAI:")
         print(response)
         print()
