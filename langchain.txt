@@ -1,0 +1,1876 @@
+What is Langchain?
+
+An open-source framework(pre-built toolkit that provides developers with a foundation to build applicationson top of them) designed to help developers build applications powered by large language models (LLMs). It provides tools that connect LLMs to outside data, APIs, and other tools. This makes it easier to build complex AI workflows and agents that can work on their own.
+
+Agent = Model + Harness
+
+LangChain provides a minimal, configurable harness : create_agent. The harness is everything that surrounds and controls the AI model to turn it into a useful agent i.e :
+(i). the prompt, provides instructions or background context letting  the AI know who is it and its objective.
+(ii) the tools, external features given to the AI so it can take action.
+(iii) middleware, Guardrails, rules, or extra processing steps that control how the AI behaves, handles errors, or stays on track.
+
+Example of how to create a simple langchain agent making use of a custom tool and create_agent.
+------------------------------------------------------------------------
+# pip install -qU langchain "langchain[openai]"
+from langchain.agents import create_agent
+
+def get_weather(city: str) -> str:
+    """Get weather for a given city."""
+    return f"It's always sunny in {city}!"
+
+agent = create_agent(
+    model="openai:gpt-5.5",
+    tools=[get_weather],
+    system_prompt="You are a helpful assistant",
+)
+
+result = agent.invoke(
+    {"messages": [{"role": "user", "content": "What's the weather in San Francisco?"}]}
+)
+print(result["messages"][-1].content_blocks)
+
+------------------------------------------------------------------------
+
+Agents
+
+-is a model calling tools in a loop until a given objective is met.
+
+https://mintcdn.com/langchain-5e9cc07a/jtty0O--UJOKG0nK/oss/images/core_agent_loop.svg?w=1100&fit=max&auto=format&n=jtty0O--UJOKG0nK&q=85&s=c6e573620259ef11542015f3f735eb83
+
+What the harness does:
+gets the model the right context(instructions) at the right time for a given task.
+
+in its simplest form:
+
+------------------------------------------------------------------------
+
+from langchain.agents import create_agent
+
+agent = create_agent(model="google_genai:gemini-3.6-flash", tools=tools)
+
+------------------------------------------------------------------------
+
+Core components
+
+Model
+
+Pass the model identifier ("provider_name : model_version") or initialize a model instance to select the model for your agent i.e best for fine-grained configuration(custom temperatures, API bases or timeouts)
+
+------------------------------------------------------------------------
+Example of an Initialized Model Instance :
+
+from langchain.agents import create_agent
+
+agent = create_agent(model="google_genai:gemini-3.6-flash", tools=tools)
+
+------------------------------------------------------------------------
+
+Tools
+
+They extend what agents can do allowing them to fetch real-time data, execute code,query databases and take action in the real world.
+To create a tool we use the @tool decorator. When you turn a Python function into a tool in LangChain, the docstring (the text comment inside """triple quotes""") automatically becomes the tool's description.
+
+------------------------------------------------------------------------
+Example:
+
+from langchain.tools import tool
+
+@tool
+def search_database(query: str, limit: int = 10) -> str:
+    """Search the customer database for records matching the query.
+
+    Args:
+        query: Search terms to look for
+        limit: Maximum number of results to return
+    """
+    return f"Found {limit} results for '{query}'"
+
+------------------------------------------------------------------------
+
+Type hints(Python code annotations that specify what type of data a function parameter expects to receive (e.g., str for text, int for numbers, or bool for true/false)) are required as they define and specify what type of data a function parameter expects to receive (e.g., str for text, int for numbers, or bool for true/false). The docstring should be informative and concise to help the model understand the tool’s purpose.
+
+Custom tool properties
+
+Custom tool name
+
+Usually by default the tool name comes from the function name. By overriding you can change it to something more descriptive
+
+------------------------------------------------------------------------
+
+Example:
+
+@tool("web_search")  # Custom name
+def search(query: str) -> str:
+    """Search the web for information."""
+    return f"Results for: {query}"
+
+print(search.name)  # web_search
+
+------------------------------------------------------------------------
+
+System Prompt
+
+Shapes how an agent approaches a task or tasks. It accepts a str or SystemMessage. Middleware is used at runtime to make dynamic prompts.
+
+------------------------------------------------------------------------
+Example:
+
+agent = create_agent(
+    model="google_genai:gemini-3.6-flash",
+    tools=tools,
+    system_prompt="You are a helpful assistant. Be concise and accurate.",
+)
+
+------------------------------------------------------------------------
+
+Tool Calling
+
+Tool calling means the model decides to use a function/tool to do a task such as searching the web, reading a database, or running code.
+
+- A tool includes:
+  - a name
+  - a description
+  - input arguments
+  - a function/coroutine to run
+
+This is also called function calling.
+
+ Simple flow
+1. User asks a question
+2. Model decides which tool is needed
+3. Tool runs with the required arguments
+4. Tool result is sent back to the model
+5. Model uses the result to answer
+
+------------------------------------------------------------------------
+Example:
+
+from langchain.tools import tool
+
+@tool
+def get_weather(location: str) -> str:
+    """Get the current weather for a location."""
+    return f"It is sunny in {location}."
+
+model_with_tools = model.bind_tools([get_weather])
+
+response = model_with_tools.invoke("What's the weather in Boston?")
+print(response.tool_calls)
+
+------------------------------------------------------------------------
+
+This means the model is not just answering from memory; it can request real data from tools.
+
+---
+
+Tool execution loop
+
+When the model calls a tool, you must execute it and send the output back to the model.
+
+------------------------------------------------------------------------
+messages = [{"role": "user", "content": "What's the weather in Boston?"}]
+ai_msg = model_with_tools.invoke(messages)
+messages.append(ai_msg)
+
+for tool_call in ai_msg.tool_calls:
+    tool_result = get_weather.invoke(tool_call)
+    messages.append(tool_result)
+
+final_response = model_with_tools.invoke(messages)
+print(final_response.text)
+
+------------------------------------------------------------------------
+
+Key idea
+- Without an agent: you run the tool manually
+- With an agent: LangChain handles this tool loop automatically
+
+---
+
+Forced tool use
+
+Sometimes you want the model to use a tool, not choose freely.
+
+------------------------------------------------------------------------
+e.g
+
+model_with_tools = model.bind_tools([get_weather], tool_choice="any")
+# or force a specific tool
+# model_with_tools = model.bind_tools([get_weather], tool_choice="get_weather")
+
+------------------------------------------------------------------------
+
+This makes the model use a tool when needed.
+
+---
+
+Parallel tool calls
+
+If multiple tasks are independent, the model can call multiple tools at the same time.
+
+------------------------------------------------------------------------
+
+response = model_with_tools.invoke(
+    "What's the weather in Boston and Tokyo?"
+)
+
+print(response.tool_calls)
+# [
+#   {'name': 'get_weather', 'args': {'location': 'Boston'}, 'id': 'call_1'},
+#   {'name': 'get_weather', 'args': {'location': 'Tokyo'}, 'id': 'call_2'}
+# ]
+
+------------------------------------------------------------------------
+
+This is useful for faster execution when tasks do not depend on each other.
+
+---
+
+Streaming tool calls
+
+When streaming, tool calls appear in chunks before the final answer is complete.
+
+------------------------------------------------------------------------
+
+for chunk in model_with_tools.stream("What's the weather in Boston and Tokyo?"):
+    for tool_chunk in chunk.tool_call_chunks:
+        if name := tool_chunk.get("name"):
+            print(f"Tool: {name}")
+        if args := tool_chunk.get("args"):
+            print(f"Args: {args}")
+
+
+------------------------------------------------------------------------
+
+This lets you see the tool call being built in real time.
+
+---
+In summary tool calling lets a model decide to use external functions, run them, and then use the results to answer better. It supports normal execution, forced tool use, parallel calls, and streaming.
+
+
+========================================================================
+
+Structured output
+
+Means forcing the AI agent to give you its final answer in a specific, formatted structure (like a filled-out form or JSON data) instead of plain conversational text.
+It make use of response_format= to return a validated schemafrom the agent.
+
+------------------------------------------------------------------------
+Example:
+from pydantic import BaseModel
+from langchain.agents import create_agent
+
+
+class Answer(BaseModel):
+    summary: str
+    confidence: float
+
+
+agent = create_agent(model="google_genai:gemini-3.6-flash", tools=tools, response_format=Answer)
+result = agent.invoke({"messages": [{"role": "user", "content": "Summarize AI trends"}]})
+result["structured_response"]  # Answer(summary=..., confidence=...)
+
+------------------------------------------------------------------------
+
+Agent state
+
+Its a specialized typed dict that stores the current conversation history and any custom fields your tools and middleware need.AgentState allows an agent to manage/track its execution.
+
+"messages" is the built-in field and list[BaseMessage] is the type assigned to the built-in field. Messages are only added never replaced in the conversation history for the current thread.
+
+------------------------------------------------------------------------
+Example:
+
+from langchain.agents import AgentState, create_agent
+
+
+class MyState(AgentState):
+    user_id: str
+    call_count: int
+
+
+agent = create_agent(
+    model="google_genai:gemini-3.6-flash",
+    tools=[],
+    state_schema=MyState,
+)
+
+------------------------------------------------------------------------
+
+Invocation
+
+It is the act of calling, triggering or execution of a function, agent or runnable object with a given input to produce an output.
+
+There are three primary Invocation methods:
+
+Invoke a straightforward way to call a model using invoke() with a single message pass or list of messages.
+
+for example:
+ When you invoke an agent, you pass in an initial state or message (like a prompt). The agent processes the input through its model, optionally calls tools in a loop, and returns the final state or response.
+
+------------------------------------------------------------------------
+e.g 
+
+single message pass
+
+response = model.invoke("Why do parrots have colorful feathers?")
+print(response)
+------------------------------------------------------------------------
+A list of messages 
+
+conversation = [
+    {"role": "system", "content": "You are a helpful assistant that translates English to French."},
+    {"role": "user", "content": "Translate: I love programming."},
+    {"role": "assistant", "content": "J'adore la programmation."},
+    {"role": "user", "content": "Translate: I love building applications."}
+]
+
+response = model.invoke(conversation)
+print(response)  # AIMessage("J'adore créer des applications.")
+
+------------------------------------------------------------------------
+Example:
+
+from langchain.agents import create_agent
+from langchain_core.utils.uuid import uuid7
+from langgraph.checkpoint.memory import InMemorySaver
+
+agent = create_agent(
+    model="google_genai:gemini-3.6-flash",
+    tools=[],
+    checkpointer=InMemorySaver(),#Enables memory persistence.
+)
+
+config = {
+    "configurable": {"thread_id": str(uuid7())
+#Generates a unique ID fro the conversation session
+}}
+#The session ID is then passed to LangChain so it knows which #conversation history to load or update
+
+result = agent.invoke(
+    {"messages": [{"role": "user", "content": "What's the weather in San Francisco?"}]},
+    config=config,
+)
+
+# A follow-up turn on the same conversation: reuse the same thread_id to keep history
+result = agent.invoke(
+    {"messages": [{"role": "user", "content": "What about tomorrow?"}]},
+    config=config,
+)
+
+------------------------------------------------------------------------
+
+Streaming
+
+stream() returns an iterator that outputs chunks as they are produced, a loop can be used to process each chunk in real-time:
+
+e.g 
+
+conversation = [
+    {"role": "system", "content": "You are a helpful assistant that translates English to French."},
+    {"role": "user", "content": "Translate: I love programming."},
+    {"role": "assistant", "content": "J'adore la programmation."},
+    {"role": "user", "content": "Translate: I love building applications."}
+]
+
+response = model.invoke(conversation)
+print(response)  # AIMessage("J'adore créer des applications.")
+
+stream() returns multiple AIMessageChunk objects, containing each a portion of output text. The chunks are designed to be gathered into a full message via summation
+
+e.g 
+
+full = None  # None | AIMessageChunk
+for chunk in model.stream("What color is the sky?"):
+    full = chunk if full is None else full + chunk
+    print(full.text)
+
+# The
+# The sky
+# The sky is
+# The sky is typically
+# The sky is typically blue
+# ...
+
+print(full.content_blocks)
+# [{"type": "text", "text": "The sky is typically blue..."}]
+
+------------------------------------------------------------------------
+
+invoke returns the final response after the executionis complete. Streaming allows the agent to emit live updates as events occur e.g Words pop up on screen token-by-token, and status messages appear whenever the agent executes a tool call (e.g., "Searching weather API...")
+
+------------------------------------------------------------------------
+e.g 
+# Import message types to tell user messages apart from AI messages
+from langchain.messages import AIMessage, HumanMessage
+
+# Start streaming updates from the agent instead of waiting for a final #answer
+stream = agent.stream_events(
+    {"messages": [{"role": "user", "content": "Search for AI news and summarize the findings"}]},
+    version="v3",
+)
+
+# Loop through state snapshots as the agent executes steps in real time
+#for snapshot in stream.values:
+    
+    # Grab the newest message added to the conversation history
+    latest_message = snapshot["messages"][-1]
+    
+    # Check if this latest message contains text content
+    if latest_message.content:
+        
+        # If the message came from the user, print it as a User prompt
+        if isinstance(latest_message, HumanMessage):
+            print(f"User: {latest_message.content}")
+            
+        # If the message came from the AI agent, print it as an Agent response
+        elif isinstance(latest_message, AIMessage):
+            print(f"Agent: {latest_message.content}")
+            
+    # If there is no text content, check if the agent is trying to run external tools
+    elif latest_message.tool_calls:
+        # Print the list of tool names the agent is currently invoking
+        print(f"Calling tools: {[tc['name'] for tc in latest_message.tool_calls]}")
+------------------------------------------------------------------------
+
+Batch
+
+Batching means sending many model requests at once to run in parallel. This is faster and cheaper than doing them one by one.
+
+------------------------------------------------------------------------
+e.g 
+
+responses = model.batch([
+    "Why do parrots have colorful feathers?",
+    "How do airplanes fly?",
+    "What is quantum computing?"
+])
+
+for response in responses:
+    print(response)
+
+------------------------------------------------------------------------
+
+- model.batch() = sends multiple requests together
+- Good for speed and lower cost
+- Different from provider batch APIs like OpenAI/Anthropic batch endpoints
+
+batch() vs batch_as_completed()
+-------------------------------
+- batch() returns only the final results after the whole batch finishes
+- batch_as_completed() returns each result as soon as it is done
+
+------------------------------------------------------------------------
+
+for response in model.batch_as_completed([
+    "Why do parrots have colorful feathers?",
+    "How do airplanes fly?",
+    "What is quantum computing?"
+]):
+    print(response)
+
+------------------------------------------------------------------------
+
+- Results may come back out of order
+- Each result includes its input index so you can match it back
+
+Control parallelism
+You can limit how many requests run at once with `max_concurrency`:
+
+------------------------------------------------------------------------
+e.g 
+
+model.batch(
+    list_of_inputs,
+    config={"max_concurrency": 5}
+)
+------------------------------------------------------------------------
+
+In summary batching sends many independent model calls in parallel; batch() waits for all results, while batch_as_completed() gives results as they finish.
+
+
+========================================================================
+
+Configure the harness
+
+An agent harness created with create_agent acts as the configurable environment that controls the model, tools, and execution loop. To extend this harness, you use middleware—modular, plug-and-play extensions designed to handle single, specific responsibilities such as error retries, guardrails, or memory compression. Middleware integrates into the system by attaching to hooks (like before_model or after_model), which intercept the execution loop at key moments to inspect or modify the underlying AgentState. Because middleware is designed for seamless composition, you can stack multiple independent modules sequentially without them interfering with one another. This extensible design gives you total flexibility, allowing you to attach only the prebuilt or custom middleware your specific application requires while skipping the rest.
+
+
+
+Execution environment
+
+The execution environment gives the agent a workspace: tools it can call, a filesystem for reading and writing files across turns, and code execution for running scripts or shell commands.
+
+-------------------------------------------------------------------------
+e.g
+
+from langchain.agents import create_agent
+from deepagents.backends import StateBackend
+from deepagents.middleware import FilesystemMiddleware
+
+agent = create_agent(
+    model="google_genai:gemini-3.6-flash",
+    tools=[search],
+    middleware=[FilesystemMiddleware(backend=StateBackend())],#adds #file-system support so the agent can read/write files through a #saved state backend.
+)
+-------------------------------------------------------------------------
+
+Context management
+
+LLMs have limited memory at any moment, so agents manage that memory by summarizing old context, reloading persistent knowledge, and activating only relevant skills when needed.
+
+Think of an AI agent like a worker with a limited notebook: the notebook is the context window, and every new task fills it with notes, tool results, and previous steps; because the notebook has limited space, older notes must be summarized so the important information is kept without overflowing the limit, while permanent instructions are stored in a reference file and loaded at the start so the worker remembers them across sessions, and specific tools or skills are only pulled out when needed instead of dumping all knowledge into the notebook at once.
+
+Planning and delegation
+
+Complex tasks often go beyond what one context window can handle. To manage this, delegation lets the main agent split the work into smaller parts and assign each part to subagents, where each subagent works in its own separate context. This keeps the main agent focused on planning and coordination instead of doing every step itself. Different tasks can also run in parallel, which makes the process faster and keeps the main agent’s context cleaner and less crowded.
+
+-------------------------------------------------------------------------
+e.g
+
+# Import the backend that stores agent state
+from deepagents.backends import StateBackend
+
+# Import the filesystem middleware so the agent can read/write files during work
+from deepagents.middleware import FilesystemMiddleware
+
+# Import middleware for creating and managing subagents
+from deepagents.middleware.subagents import SubAgentMiddleware
+
+# Import the function used to build the main agent
+from langchain.agents import create_agent
+
+# Import middleware for keeping a todo list while the agent works
+from langchain.agents.middleware import TodoListMiddleware
+
+# Import the tool decorator to turn a Python function into an agent tool
+from langchain.tools import tool
+
+
+# Define a simple search tool that the agent can call
+@tool
+def search(query: str) -> str:
+    """Search for a query and return a short summary."""
+    return f"Search results for: {query}"
+
+
+# Create one shared backend to store state for the agent and its subagents
+backend = StateBackend()
+
+# Build the main agent
+agent = create_agent(
+    # Choose the model for the main agent
+    model="google_genai:gemini-3.6-flash",
+
+    # Give the agent access to the search tool
+    tools=[search],
+
+    # Add middlewares for file access, planning, and subagents
+    middleware=[
+        # Lets the agent work with files through the shared backend
+        FilesystemMiddleware(backend=backend),
+
+        # Keeps track of tasks in a todo list
+        TodoListMiddleware(),
+
+        # Enables subagents that can be delegated work
+        SubAgentMiddleware(
+            backend=backend,
+            subagents=[
+                {
+                    # Name of the subagent
+                    "name": "researcher",
+
+                    # What this subagent is for
+                    "description": "Searches and returns a structured summary.",
+
+                    # Instructions for the subagent
+                    "system_prompt": "Use the search tool to research the question and summarize key points.",
+
+                    # Tools available to the subagent
+                    "tools": [search],
+
+                    # Model used by this subagent
+                    "model": "anthropic:claude-sonnet-4-6",
+
+                    # Extra middleware for this subagent
+                    "middleware": [],
+                }
+            ],
+        ),
+    ],
+)
+-------------------------------------------------------------------------
+
+Naming agent
+
+You can use an identifier, it is especially useful when embedding the agent as a subgraph in a multi-agent system.
+
+-------------------------------------------------------------------------
+
+e.g 
+
+agent = create_agent(model="google_genai:gemini-3.6-flash", tools=tools, name="research_assistant")
+
+-------------------------------------------------------------------------
+
+Fault tolerance
+
+An agent is built to keep working even when external systems fail. In production, problems like rate limits, model timeouts, and temporary API errors are common, but they are not usually seen during normal development. Fault tolerance middleware handles these problems automatically at the system level, so the app does not have to add try/except around every tool call. This keeps the code cleaner, reduces repeated error-handling logic, and helps the agent recover from temporary failures without stopping the whole workflow.
+
+-------------------------------------------------------------------------
+e.g 
+
+# Import the function that creates an agent
+from langchain.agents import create_agent
+
+# Import middleware for retrying failed model calls and failed tool calls
+from langchain.agents.middleware import ModelRetryMiddleware, ToolRetryMiddleware
+
+# Import the decorator used to turn Python functions into tools
+from langchain.tools import tool
+
+
+# Define a simple search tool
+@tool
+def search(query: str) -> str:
+    """Search for a query and return a short summary."""
+    return f"Search results for: {query}"
+
+
+# Create the agent
+agent = create_agent(
+    # Choose the model
+    model="google_genai:gemini-3.6-flash",
+
+    # Give the agent access to the search tool
+    tools=[search],
+
+    # Add retry middleware
+    middleware=[
+        # Retry failed model requests up to 3 times
+        ModelRetryMiddleware(max_retries=3),
+
+        # Retry failed tool calls up to 2 times
+        ToolRetryMiddleware(max_retries=2),
+    ],
+)
+-------------------------------------------------------------------------
+
+Guardrails
+
+Some rules must be enforced by the system itself, not just by the model prompt. Guardrails check information while it moves through the agent loop and block or filter it according to policy before it reaches the model’s context. This makes compliance and safety reliable, even when the model is tempted to ignore a rule.
+
+
+-------------------------------------------------------------------------
+e.g 
+
+# Import the function used to build the agent
+from langchain.agents import create_agent
+
+# Import the privacy guardrail middleware for detecting PII such as emails
+from langchain.agents.middleware import PIIMiddleware
+
+# Import the decorator used to turn Python functions into tools
+from langchain.tools import tool
+
+
+# Define a custom tool called search
+@tool
+def search(query: str) -> str:
+    """Search for a query and return a short summary."""
+    return f"Search results for: {query}"
+
+
+# Create the agent
+agent = create_agent(
+    # Choose the LLM model to use
+    model="google_genai:gemini-3.6-flash",
+
+    # Give the agent access to the search tool
+    tools=[search],
+
+    # Add a guardrail that checks for email addresses
+    middleware=[PIIMiddleware("email")],
+)
+
+-------------------------------------------------------------------------
+
+Steering 
+
+Full autonomy is not always safe or useful. Steering lets a human step in at important decision points, such as before risky actions, expensive API requests, or anything that needs judgment. Instead of letting the agent do everything automatically, it pauses, waits for approval, and then continues only after the human accepts, edits, or rejects the action.
+
+-------------------------------------------------------------------------
+e.g 
+
+# Import the function that creates the agent
+from langchain.agents import create_agent
+
+# Import the middleware that pauses execution for human approval
+from langchain.agents.middleware import HumanInTheLoopMiddleware
+
+# Import the decorator used to turn Python functions into tools
+from langchain.tools import tool
+
+
+# Define a custom tool called search
+@tool
+def search(query: str) -> str:
+    """Search for a query and return a short summary."""
+    return f"Search results for: {query}"
+
+
+# Create the agent
+agent = create_agent(
+    # Use the Gemini model
+    model="google_genai:gemini-3.6-flash",
+
+    # Give the agent access to the search tool
+    tools=[search],
+
+    # Add human approval middleware
+    middleware=[
+        # Interrupt the workflow when the agent tries to write a file
+        HumanInTheLoopMiddleware(interrupt_on={"write_file": True})
+    ],
+)
+------------------------------------------------------------------------
+
+Models 
+
+LLMs are powerful AI tools that can interpret and generate text like humans. They are the reasoning engine of agents.
+
+These models support:
+-Tool calling, enables external tool calling and using those results in the responses 
+
+-Structured output, model responds in a defined format
+
+-Mulimodality, process and return data other than text, such as images, audio, and video.
+
+-Reasoning, models perform multi-step reasoning to arrive at a conclusion.
+
+Basic usage
+
+Models can be used in two ways:
+
+1. With agents: the model is chosen when creating the agent.
+2. Standalone: the model is called directly for tasks like text generation, classification, or extraction.
+
+The same model interface works in both cases, so you can start simple and later move into more advanced agent workflows.
+
+Initialization
+
+In LangChain we use init_chat_model to initialize a Standalone model from a chat model provider of any choice.
+
+------------------------------------------------------------------------
+e.g 
+
+import os
+from langchain.chat_models import init_chat_model
+
+os.environ["OPENAI_API_KEY"] = "sk-..."
+
+model = init_chat_model("gpt-5.5")
+
+
+response = model.invoke("Why do parrots talk?")
+
+------------------------------------------------------------------------
+
+Supported providers and models
+
+LangChain works with major AI model providers through separate integration packages. All of these providers follow the same standard interface, so you can switch between them without changing your app logic.
+
+
+Parameters
+
+A chat model can be configured using parameters that change its behavior. The exact parameters depend on the model and provider, but common ones include:
+
+- `model` (string):
+ the name or ID of the model to use. You can also include the provider in the same string, such as `openai:o1`.
+
+- `api_key`(string):
+ the key used to authenticate with the provider. This is usually stored in an environment variable.
+
+- `temperature` (number):
+ controls randomness. Higher values make output more creative; lower values make it more predictable.
+
+- `max_tokens`(number):
+ limits how long the model’s response can be.
+
+- `timeout` (number):
+ the maximum time to wait for a response before canceling the request.
+
+- `max_retries` (number):
+ the number of times the system retries a failed request. It retries network errors, rate limits, and server errors automatically, but not client-side errors such as 401 or 404. For long agent tasks on unstable networks, a higher value like 10–15 may be useful.
+
+------------------------------------------------------------------------
+e.g
+
+model = init_chat_model(
+    "claude-sonnet-4-6",
+    # Kwargs passed to the model:
+    temperature=0.7,
+    timeout=30,
+    max_tokens=1000,
+    max_retries=6,  # Default; increase for unreliable networks
+)
+------------------------------------------------------------------------
+
+Connection resilience
+
+LangChain chat models will automatically try failed API calls again using exponential backoff. By default, they retry up to 6 times for network problems, rate limits (429), and server errors (5xx). They do not retry client-side errors such as 401 (unauthorized) or 404 (not found).
+
+You can adjust max_retries and timeout when creating a model, pass that instanceto create_agent, create_deep_agent or call it standalone.
+
+------------------------------------------------------------------------
+e.g
+
+from langchain.chat_models import init_chat_model
+
+model = init_chat_model(
+    "google_genai:gemini-3.6-flash",
+    max_retries=10,  # Increase for unreliable networks (default: 6)
+    timeout=120,  # Seconds; increase for slow connections
+)
+------------------------------------------------------------------------
+
+Advanced topics 
+
+Model Profiles
+
+Model profiles are a way to check what a model can do before using it.
+
+- Requires: `langchain>=1.1`
+- You can inspect a model’s supported features through `model.profile`
+
+------------------------------------------------------------------------
+
+model.profile
+# {
+#   "max_input_tokens": 400000,
+#   "image_inputs": True,
+#   "reasoning_output": True,
+#   "tool_calling": True,
+#   ...
+# }
+
+------------------------------------------------------------------------
+
+What this is for
+A model profile tells you its capabilities, such as:
+- max input size
+- image support
+- reasoning support
+- tool calling support
+- other feature flags
+
+This helps the app adapt automatically.
+
+Examples of use
+- Summarization middleware can decide when to compress context
+- Structured output can be chosen automatically
+- Input can be blocked if the model does not support a feature
+- Deep agents can filter models based on capability
+
+
+Key idea
+Model profiles help your app choose the right model and behavior based on what that model can actually do.
+
+
+Model profiles is a capability checklist for a model. They help LangChain decide what the model can support and how to use it safely and smartly.
+
+-----------------------------------------------------------------------
+
+Multimodal
+
+What it means
+Multimodal models can work with more than just text. They can process and generate images, audio, and video.
+
+In LangChain, you pass non-text data using content blocks, which are structured message parts rather than plain text strings.
+
+Supported formats
+LangChain chat models with multimodal support usually accept:
+- standard cross-provider format
+- OpenAI chat completions format
+- provider-native formats, such as Anthropic-specific input
+
+-----------------------------------------------------------------------
+Example
+
+response = model.invoke("Create a picture of a cat")
+print(response.content_blocks)
+# [
+#   {"type": "text", "text": "Here's a picture of a cat"},
+#   {"type": "image", "base64": "...", "mime_type": "image/jpeg"},
+# ]
+
+-----------------------------------------------------------------------
+
+The model can return mixed content, not just plain text. A response may contain both text and image data.
+
+in summary models can work with images, audio, and video using content blocks.
+---
+
+Reasoning
+
+Some models can do multi-step reasoning before answering. This means they break a hard question into smaller steps and think through it.
+
+If the model supports it, LangChain can surface that reasoning process.
+
+Stream reasoning output
+
+-----------------------------------------------------------------------
+
+for chunk in model.stream("Why do parrots have colorful feathers?"):
+    reasoning_steps = [r for r in chunk.content_blocks if r["type"] == "reasoning"]
+    print(reasoning_steps if reasoning_steps else chunk.text)
+
+-----------------------------------------------------------------------
+
+
+Reasoning effort
+Some models let you control how much reasoning they do:
+- low
+- medium
+- high
+- or a token budget
+
+This is controlled with `reasoning_effort`.
+
+-----------------------------------------------------------------------
+
+from langchain_anthropic import ChatAnthropic
+
+model = ChatAnthropic(model="claude-sonnet-4-6")
+response = model.invoke(
+    "Why do parrots have colorful feathers?",
+    reasoning_effort="high",
+)
+
+-----------------------------------------------------------------------
+
+
+Not every model supports this. You can check:
+-----------------------------------------------------------------------
+model.profile["reasoning_effort_levels"]
+model.profile["reasoning_effort_default"]
+-----------------------------------------------------------------------
+
+Reasoning helps the model think more deeply, and LangChain can expose that process when supported.
+
+Some models do step-by-step thinking and can show that reasoning when supported.
+-----------------------------------------------------------------------
+
+Local Models
+
+You can run models locally on your own machine instead of using cloud APIs.
+
+This is useful when:
+- privacy matters
+- you want custom models
+- you want to reduce API cost
+
+A common option is Ollama, which lets you run chat and embedding models locally. Local models give more control and privacy, but they depend on your hardware and setup.
+
+Models can run on your own hardware for privacy and control.
+-----------------------------------------------------------------------
+
+Prompt Caching
+
+Prompt caching stores repeated input tokens so the model can reuse them instead of recalculating them each time.
+
+This reduces:
+- latency
+- cost
+- repeated processing
+
+Types of caching
+There are three main levels:
+
+1. Implicit provider caching
+   - Provider handles it automatically
+Example: OpenAI, Gemini
+
+2. Provider-level explicit control
+   - You manually mark cache points for greater control
+Examples:
+   - ChatOpenAI (`prompt_cache_key`)
+   - Anthropic cache_control block
+   - Bedrock cachePoint blocks
+
+3. LangChain middleware 
+   - LangChain helps cache stable prompt and tool content in agent workflows
+Examples:
+   - Anthropic’s AnthropicPromptCachingMiddleware
+   - AWS Bedrock’s BedrockPromptCachingMiddleware
+
+Caching is most useful when the same prompt parts are reused often, especially for long context.
+
+Repeated prompt tokens can be reused to save time and cost in summsry
+-----------------------------------------------------------------------
+
+
+Server-side Tool Use
+
+Some providers support server-side tool-calling loops. The model can interact with built-in tools like web search or code interpreters in a single conversational turn.
+
+If a model invokes a tool server-side, the response message will include content blocks showing the tool call and result.
+
+Invoke with server-side tool use
+-----------------------------------------------------------------------
+
+from langchain.chat_models import init_chat_model
+
+model = init_chat_model("gpt-5.4-mini")
+
+tool = {"type": "web_search"}
+model_with_tools = model.bind_tools([tool])
+
+response = model_with_tools.invoke("What was a positive news story from today?")
+print(response.content_blocks)
+
+-----------------------------------------------------------------------
+
+Result
+[
+    {
+        "type": "server_tool_call",
+        "name": "web_search",
+        "args": {
+            "query": "positive news stories today",
+            "type": "search"
+        },
+        "id": "ws_abc123"
+    },
+    {
+        "type": "server_tool_result",
+        "tool_call_id": "ws_abc123",
+        "status": "success"
+    },
+    {
+        "type": "text",
+        "text": "Here are some positive news stories from today...",
+        "annotations": [
+            {
+                "end_index": 410,
+                "start_index": 337,
+                "title": "article title",
+                "type": "citation",
+                "url": "..."
+            }
+        ]
+    }
+]
+-----------------------------------------------------------------------
+This represents one conversational turn. There are no ToolMessage objects to pass back manually.
+
+In summary, server-side tool use lets the model call tools internally during the same turn.
+
+---
+
+Model Exceptions
+
+Major LangChain integrations raise standard exception types for common model failures.
+
+These exceptions inherit from both:
+- the LangChain base exception type
+- the provider SDK's own exception type
+
+Example
+-----------------------------------------------------------------------
+
+from langchain.chat_models import init_chat_model
+from langchain_core.exceptions import ModelTimeoutError
+
+model = init_chat_model("openai:gpt-5.6-luna", timeout=0.0001)
+
+try:
+    response = model.invoke("Hello")
+except ModelTimeoutError:
+    print("caught")
+
+-----------------------------------------------------------------------
+
+Exception types
+- ModelAuthenticationError
+- ModelPermissionDeniedError
+- ModelInvalidRequestError
+- ModelNotFoundError
+- ModelRateLimitError
+- ModelAPIError
+- ModelConnectionError
+- ModelTimeoutError
+- ContextOverflowError
+
+Each type has an is_retryable attribute that retry middleware respects by default.
+
+In summary, model exceptions give a standard way to handle provider failures.
+
+-----------------------------------------------------------------------
+
+Rate Limiting
+
+Many model providers limit how many requests you can make in a given time period. If you hit a rate limit, you usually get an error and need to wait before sending more requests. To help manage this, integrations accept a rate_limiter parameter.
+
+-----------------------------------------------------------------------
+from langchain.rate_limiters import InMemoryRateLimiter
+
+rate_limiter = InMemoryRateLimiter(
+    requests_per_second=0.1,  # 1 request every 10s
+    check_every_n_seconds=0.1,  # Check every 100ms whether allowed to make a request
+    max_bucket_size=10,  # Controls the maximum burst size.
+)
+
+model = init_chat_model(
+    model="gpt-5.5",
+    model_provider="openai",
+    rate_limiter=rate_limiter  
+)
+-----------------------------------------------------------------------
+In summary, rate limiting is when a provider slows or blocks too many requests.
+
+-----------------------------------------------------------------------
+
+Base URL and Proxy Settings
+
+You can configure a custom base URL for providers that use the OpenAI Chat Completions API format.
+
+Example
+-----------------------------------------------------------------------
+
+model = init_chat_model(
+    model="MODEL_NAME",
+    model_provider="openai",
+    base_url="BASE_URL",
+    api_key="YOUR_API_KEY",
+)
+
+-----------------------------------------------------------------------
+
+HTTP proxy
+Some integrations also support proxy configuration.
+
+Example
+-----------------------------------------------------------------------
+
+from langchain_openai import ChatOpenAI
+
+model = ChatOpenAI(
+    model="gpt-5.5",
+    openai_proxy="http://proxy.example.com:8080"
+)
+
+-----------------------------------------------------------------------
+
+In summary, base URL and proxy settings let you route requests through custom endpoints or proxies.
+
+---
+
+Log Probabilities
+
+Some models can return token-level log probabilities, which show how likely each token is.
+
+Example
+-----------------------------------------------------------------------
+
+model = init_chat_model(
+    model="gpt-5.5",
+    model_provider="openai"
+).bind(logprobs=True)
+
+response = model.invoke("Why do parrots talk?")
+print(response.response_metadata["logprobs"])
+
+-----------------------------------------------------------------------
+
+This is useful for checking model confidence and probability patterns.
+
+In summary, log probabilities show how likely each generated token is.
+
+---
+
+Token Usage
+
+Some providers return token usage metadata as part of the model response.
+
+This includes:
+- input tokens
+- output tokens
+- total tokens
+- cached tokens
+- reasoning tokens
+
+You can track this with a callback or context manager.
+
+Example
+-----------------------------------------------------------------------
+
+from langchain.chat_models import init_chat_model
+from langchain_core.callbacks import UsageMetadataCallbackHandler
+
+model = init_chat_model(model="gpt-5.4-mini")
+callback = UsageMetadataCallbackHandler()
+
+result = model.invoke("Hello", config={"callbacks": [callback]})
+print(callback.usage_metadata)
+
+-----------------------------------------------------------------------
+
+In summary, token usage helps track a model’s cost and resource use.
+
+---
+
+Invocation Config
+
+When invoking a model, you can pass more runtime settings using config.
+
+Example
+-----------------------------------------------------------------------
+
+response = model.invoke(
+    "Tell me a joke",
+    config={
+        "run_name": "joke_generation",
+        "tags": ["humor", "demo"],
+        "metadata": {"user_id": "123"},
+        "callbacks": [my_callback_handler],
+    }
+)
+
+-----------------------------------------------------------------------
+
+Common config options:
+- run_name
+- tags
+- metadata
+- max_concurrency
+- callbacks
+- recursion_limit
+
+In summary, invocation config controls runtime behavior and tracking.
+
+-----------------------------------------------------------------------
+
+Configurable Models
+
+
+You can create a model that is configurable at runtime.
+
+Example
+-----------------------------------------------------------------------
+
+from langchain.chat_models import init_chat_model
+
+configurable_model = init_chat_model(temperature=0)
+
+configurable_model.invoke(
+    "what's your name",
+    config={"configurable": {"model": "gpt-5-nano"}}
+)
+
+-----------------------------------------------------------------------
+
+This lets you choose the model dynamically without re-creating the object.
+
+In summary, configurable models let you switch model behavior at runtime.
+
+-----------------------------------------------------------------------
+
+Dynamic Model Selection
+
+Dynamic model selection chooses the model at runtime based on request complexity, context, or cost.
+
+Example idea:
+- small request → cheap model
+- complex request → stronger model
+
+This is done through middleware that changes the model before execution.
+
+-----------------------------------------------------------------------
+from langchain_openai import ChatOpenAI
+from langchain.agents import create_agent
+from langchain.agents.middleware import wrap_model_call, ModelRequest, ModelResponse
+
+
+basic_model = ChatOpenAI(model="gpt-5.4-mini")
+advanced_model = ChatOpenAI(model="gpt-5.5")
+
+@wrap_model_call
+def dynamic_model_selection(request: ModelRequest, handler) -> ModelResponse:
+    """Choose model based on conversation complexity."""
+    message_count = len(request.state["messages"])
+
+    if message_count > 10:
+        # Use an advanced model for longer conversations
+        model = advanced_model
+    else:
+        model = basic_model
+
+    return handler(request.override(model=model))
+
+agent = create_agent(
+    model=basic_model,  # Default model
+    tools=[],
+    middleware=[dynamic_model_selection]
+)
+-----------------------------------------------------------------------
+
+In summary, dynamic model selection helps optimize cost and performance.
+
+-----------------------------------------------------------------------
+Messages
+
+Messages are the basic unit of context in LangChain. They hold the information that gets sent to a model and the information the model returns. A message usually has three things:
+
+- Role: who sent it, such as system, user, assistant, or tool
+- Content: the actual data being sent, like text, image, file, audio, or tool output
+- Metadata: extra details such as token usage, response info, IDs, and provider-specific data
+
+This gives LangChain a standard way to represent conversation history across different model providers.
+
+-----------------------------------------------------------------------
+from langchain.chat_models import init_chat_model
+from langchain.messages import HumanMessage, AIMessage, SystemMessage
+
+model = init_chat_model("gpt-5-nano")
+
+system_msg = SystemMessage("You are a helpful assistant.")
+human_msg = HumanMessage("Hello, how are you?")
+
+# A chat model can take a list of message objects as input
+messages = [system_msg, human_msg]
+response = model.invoke(messages)   # returns an AIMessage
+print(response)
+-----------------------------------------------------------------------
+
+
+A plain string is also allowed as a shortcut for a single user message:
+
+-----------------------------------------------------------------------
+
+response = model.invoke("Write a haiku about spring")
+print(response)
+-----------------------------------------------------------------------
+
+Text prompts
+
+Use text prompts when the task is simple and you do not need memory. 
+
+-----------------------------------------------------------------------
+response = model.invoke("Write a haiku about spring")
+-----------------------------------------------------------------------
+
+
+Use message prompts when you need conversation history, system instructions, or multimodal input.
+
+-----------------------------------------------------------------------
+
+from langchain.messages import SystemMessage, HumanMessage, AIMessage
+
+messages = [
+    SystemMessage("You are a poetry expert"),
+    HumanMessage("Write a haiku about spring"),
+    AIMessage("Cherry blossoms bloom...")
+]
+
+response = model.invoke(messages)
+print(response)
+-----------------------------------------------------------------------
+Dictionary format
+
+You can also use the OpenAI-style dictionary format:
+
+-----------------------------------------------------------------------
+
+messages = [
+    {"role": "system", "content": "You are a poetry expert"},
+    {"role": "user", "content": "Write a haiku about spring"},
+    {"role": "assistant", "content": "Cherry blossoms bloom..."}
+]
+
+response = model.invoke(messages)
+print(response)
+-----------------------------------------------------------------------
+Message Types
+
+System messages
+
+A system message gives the model its role, constraints, and overall behavior. It is used to set the tone and keep the model aligned with the task.
+
+-----------------------------------------------------------------------
+
+from langchain.messages import SystemMessage, HumanMessage
+
+system_msg = SystemMessage("You are a helpful coding assistant.")
+
+messages = [
+    system_msg,
+    HumanMessage("How do I create a REST API?")
+]
+
+response = model.invoke(messages)
+print(response)
+-----------------------------------------------------------------------
+
+
+A more detailed system prompt can define a persona and set clear rules:
+
+-----------------------------------------------------------------------
+from langchain.messages import SystemMessage, HumanMessage
+
+system_msg = SystemMessage("""
+You are a senior Python developer with expertise in web frameworks.
+Always provide code examples and explain your reasoning.
+Be concise but thorough in your explanations.
+""")
+
+messages = [
+    system_msg,
+    HumanMessage("How do I create a REST API?")
+]
+
+response = model.invoke(messages)
+print(response)
+-----------------------------------------------------------------------
+
+In summary system messages control how the model behaves before user input is processed.
+
+-----------------------------------------------------------------------
+
+Human messages
+
+Human messages represent user input. They can contain plain text or richer multimodal content such as images, files, audio, and video.
+
+-----------------------------------------------------------------------
+from langchain.messages import HumanMessage
+
+response = model.invoke([
+    HumanMessage("What is machine learning?")
+])
+print(response)
+-----------------------------------------------------------------------
+
+A string is a shortcut for a single human message:
+
+-----------------------------------------------------------------------
+response = model.invoke("What is machine learning?")
+print(response)
+-----------------------------------------------------------------------
+
+You can also attach metadata to a human message:
+
+-----------------------------------------------------------------------
+
+from langchain.messages import HumanMessage
+
+human_msg = HumanMessage(
+    content="Hello!",
+    name="alice",   # optional: identifies the sender
+    id="msg_123"    # optional: unique trace ID
+)
+
+print(human_msg)
+-----------------------------------------------------------------------
+
+
+This metadata may be used by different providers in different ways, so it is best to check provider-specific behavior when needed.
+
+-----------------------------------------------------------------------
+
+AI messages
+
+AI messages are model outputs. They can include text, reasoning, tool calls, citations, multimodal data, and metadata.
+
+-----------------------------------------------------------------------
+
+response = model.invoke("Explain AI")
+print(type(response))
+print(response)
+-----------------------------------------------------------------------
+
+
+AI messages can also be created manually and inserted into a conversation history:
+
+-----------------------------------------------------------------------
+
+from langchain.messages import AIMessage, SystemMessage, HumanMessage
+
+ai_msg = AIMessage("I'd be happy to help you with that question!")
+
+messages = [
+    SystemMessage("You are a helpful assistant"),
+    HumanMessage("Can you help me?"),
+    ai_msg,
+    HumanMessage("Great! What's 2+2?")
+]
+
+response = model.invoke(messages)
+print(response)
+-----------------------------------------------------------------------
+
+AI messages usually include useful attributes like:
+
+- text
+- content
+- content_blocks
+- tool_calls
+- id
+- usage_metadata
+- response_metadata
+
+This is useful because you can inspect what the model produced and how it was generated.
+
+-----------------------------------------------------------------------
+
+
+Tool calls inside AI messages
+
+If a model uses a tool, the tool call is attached to the AI message. This is how LangChain lets LLMs fetch real data or trigger actions.
+
+-----------------------------------------------------------------------
+
+from langchain.chat_models import init_chat_model
+
+model = init_chat_model("gpt-5-nano")
+
+def get_weather(location: str) -> str:
+    """Get the weather at a location."""
+    return f"It is sunny in {location}."
+
+model_with_tools = model.bind_tools([get_weather])
+
+response = model_with_tools.invoke("What's the weather in Paris?")
+print(response.tool_calls)
+-----------------------------------------------------------------------
+
+The output usually includes:
+
+- tool name
+- arguments
+- tool call ID
+
+This is how the model asks for real-world data rather than guessing.
+
+-----------------------------------------------------------------------
+
+Tool messages
+
+A tool message carries the result of a tool call back into the conversation. It tells the model, “this is the output from the tool you asked me to run.”
+
+-----------------------------------------------------------------------
+from langchain.messages import AIMessage, ToolMessage, HumanMessage
+
+ai_message = AIMessage(
+    content=[],
+    tool_calls=[{
+        "name": "get_weather",
+        "args": {"location": "San Francisco"},
+        "id": "call_123"
+    }]
+)
+
+weather_result = "Sunny, 72°F"
+
+tool_message = ToolMessage(
+    content=weather_result,
+    tool_call_id="call_123"
+)
+
+messages = [
+    HumanMessage("What's the weather in San Francisco?"),
+    ai_message,
+    tool_message,
+]
+
+response = model.invoke(messages)
+print(response)
+-----------------------------------------------------------------------
+
+This is the key loop:
+
+- model decides a tool is needed
+- tool runs
+- result is returned as a ToolMessage
+- model uses that result to answer
+-----------------------------------------------------------------------
+
+Message content
+
+The content of a message is the actual payload that gets sent to the model. It may be a plain string, a list of provider-native blocks, or a list of standardized LangChain content blocks.
+
+This matters because models are not limited to plain text anymore. They can handle many kinds of content.
+
+-----------------------------------------------------------------------
+
+from langchain.messages import HumanMessage
+
+# Plain string content
+human_message = HumanMessage("Hello, how are you?")
+
+# Provider-native content
+human_message = HumanMessage(content=[
+    {"type": "text", "text": "Hello, how are you?"},
+    {"type": "image_url", "image_url": {"url": "https://example.com/image.jpg"}}
+])
+
+# Standard LangChain content blocks
+human_message = HumanMessage(content_blocks=[
+    {"type": "text", "text": "Hello, how are you?"},
+    {"type": "image", "url": "https://example.com/image.jpg"},
+])
+-----------------------------------------------------------------------
+
+
+The content_blocks property gives a more standardized form for LangChain to work with across model providers.
+-----------------------------------------------------------------------
+
+Standard content blocks
+
+LangChain gives a consistent standard for message content. These are called content blocks, and they include things like:
+
+- text
+- reasoning
+- image
+- audio
+- video
+- file
+- tool call
+- server-side tool call
+- invalid tool call
+
+Example of a reasoning block:
+
+-----------------------------------------------------------------------
+
+from langchain.messages import AIMessage
+
+message = AIMessage(
+    content=[
+        {"type": "reasoning", "reasoning": "The user is asking about..."},
+        {"type": "text", "text": "Here is the answer."}
+    ]
+)
+
+print(message.content_blocks)
+-----------------------------------------------------------------------
+
+
+This is useful because different providers may return different raw data, but LangChain normalizes it into a common structure.
+
+-----------------------------------------------------------------------
+
+Multimodal content
+
+Multimodal means the model can work with more than text. It can process images, audio, video, and files.
+
+Example: image input
+
+-----------------------------------------------------------------------
+
+message = {
+    "role": "user",
+    "content": [
+        {"type": "text", "text": "Describe the content of this image."},
+        {"type": "image", "url": "https://example.com/path/to/image.jpg"},
+    ]
+}
+-----------------------------------------------------------------------
+
+
+Example: file input
+
+-----------------------------------------------------------------------
+
+message = {
+    "role": "user",
+    "content": [
+        {"type": "text", "text": "Describe the content of this document."},
+        {"type": "file", "url": "https://example.com/path/to/document.pdf"},
+    ]
+}
+-----------------------------------------------------------------------
+
+Example: audio input
+
+-----------------------------------------------------------------------
+
+message = {
+    "role": "user",
+    "content": [
+        {"type": "text", "text": "Describe the content of this audio."},
+        {
+            "type": "audio",
+            "base64": "AAAAIGZ0eXBtcDQyAAAAAGlzb21tcDQyAAACAGlzb2...",
+            "mime_type": "audio/wav",
+        },
+    ]
+}
+-----------------------------------------------------------------------
+
+Example: video input
+
+-----------------------------------------------------------------------
+
+message = {
+    "role": "user",
+    "content": [
+        {"type": "text", "text": "Describe the content of this video."},
+        {
+            "type": "video",
+            "base64": "AAAAIGZ0eXBtcDQyAAAAAGlzb21tcDQyAAACAGlzb2...",
+            "mime_type": "video/mp4",
+        },
+    ]
+}
+-----------------------------------------------------------------------
+
+Not every model supports every file type, so you must check provider support before sending large or uncommon inputs.
+
+-----------------------------------------------------------------------
+
+Content block reference
+
+Content blocks are typed dictionaries used to represent message data uniformly. Some common ones are:
+
+- TextContentBlock
+- ReasoningContentBlock
+- ImageContentBlock
+- AudioContentBlock
+- VideoContentBlock
+- FileContentBlock
+- ToolCall
+- ToolCallChunk
+- InvalidToolCall
+- ServerToolCall
+- ServerToolResult
+
+Example of a standard text block:
+
+-----------------------------------------------------------------------
+
+{
+    "type": "text",
+    "text": "Hello world",
+    "annotations": []
+}
+-----------------------------------------------------------------------
+
+Example of a standard reasoning block:
+
+-----------------------------------------------------------------------
+{
+    "type": "reasoning",
+    "reasoning": "The user is asking about...",
+    "extras": {"signature": "abc123"}
+}
+-----------------------------------------------------------------------
+
+
+Example of a tool call block:
+
+-----------------------------------------------------------------------
+{
+    "type": "tool_call",
+    "name": "search",
+    "args": {"query": "weather"},
+    "id": "call_123"
+}
+-----------------------------------------------------------------------
+
+These blocks help standardize how models and tools communicate.
+-----------------------------------------------------------------------
+
+Serialization
+
+Messages can be turned into plain Python objects for storage and then restored later.
+
+-----------------------------------------------------------------------
+from langchain.messages import HumanMessage
+from langchain_core.load import dumpd, load
+
+message = HumanMessage("What is the capital of France?")
+
+# Turn the message into a plain dict
+serialized = dumpd(message)
+
+# Turn it back into a LangChain message object
+restored = load(serialized)
+
+print(serialized)
+print(restored)
+-----------------------------------------------------------------------
+
+Important warning: do not call load on untrusted data because it can instantiate Python objects and trigger side effects.
+
+-----------------------------------------------------------------------
+
+Streaming and chunks
+
+When streaming, you do not get one final message at once. Instead, you get chunks that arrive over time.
+
+-----------------------------------------------------------------------
+
+chunks = []
+full_message = None
+
+for chunk in model.stream("Hi"):
+    chunks.append(chunk)
+    print(chunk.text)
+    full_message = chunk if full_message is None else full_message + chunk
+-----------------------------------------------------------------------
+
+This allows:
+
+- live token output
+- real-time UI updates
+- progress tracking while the model is answering
+
+You can also combine chunks into a full message object:
+
+-----------------------------------------------------------------------
+full = None
+
+for chunk in model.stream("What color is the sky?"):
+    full = chunk if full is None else full + chunk
+    print(full.text)
+-----------------------------------------------------------------------
+
+Streaming is useful when you want to show the model working step by step instead of waiting for a final answer.
+-----------------------------------------------------------------------
+
+Tool calling loop in practice
+
+This is the full cycle for a simple tool-based agent:
+
+-----------------------------------------------------------------------
+from langchain.chat_models import init_chat_model
+from langchain.tools import tool
+
+model = init_chat_model("gpt-5-nano")
+
+@tool
+def get_weather(location: str) -> str:
+    """Get the weather for a location."""
+    return f"It is sunny in {location}."
+
+model_with_tools = model.bind_tools([get_weather])
+
+# 1. User asks
+messages = [{"role": "user", "content": "What's the weather in Boston?"}]
+
+# 2. Model decides to call a tool
+ai_msg = model_with_tools.invoke(messages)
+messages.append(ai_msg)
+
+# 3. Tool executes
+for tool_call in ai_msg.tool_calls:
+    tool_result = get_weather.invoke(tool_call)
+    messages.append(tool_result)
+
+# 4. Model uses tool result and answers
+final_response = model_with_tools.invoke(messages)
+print(final_response)
+-----------------------------------------------------------------------
+
+This is the heart of agentic behavior: the model reasons, calls tools when needed, and then uses the tool output to continue.
